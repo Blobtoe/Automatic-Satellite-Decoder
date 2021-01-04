@@ -6,6 +6,7 @@ from PIL import Image
 from datetime import datetime, timedelta
 import cv2
 import numpy as np
+from pathlib import Path
 
 # local imports
 from utils import log, bmp_to_jpg
@@ -14,6 +15,7 @@ from utils import log, bmp_to_jpg
 #######################################
 # records, demodulates, and decodes METEOR-M 2 given the json file for the pass and the output file name, then returns the image's file path
 def METEOR(pass_info, output_filename_base):
+    local_path = Path(__file__).parent
     # get pass info
     duration = pass_info["duration"]
     frequency = pass_info["frequency"]
@@ -21,7 +23,7 @@ def METEOR(pass_info, output_filename_base):
 
     # record pass baseband with rtl_fm
     print("recording pass...")
-    os.system(f"timeout {duration} /usr/bin/rtl_fm -M raw -s 110k -f {frequency} -E dc -g 49.6 -p 0 - | sox -t raw -r 110k -c 2 -b 16 -e s - -t wav {output_filename_base}.iq.wav rate 192k")
+    os.system(f"timeout {duration} /usr/local/bin/rtl_fm -M raw -s 110k -f {frequency} -E dc -g 49.6 -p 0 - | sox -t raw -r 110k -c 2 -b 16 -e s - -t wav {output_filename_base}.iq.wav rate 192k")
 
     # demodulate the signal
     print("demodulating meteor signal...")
@@ -63,7 +65,7 @@ def METEOR(pass_info, output_filename_base):
     THRESHOLD = 25
     ir = cv2.imread(f"{output_filename_base}.ir.jpg", cv2.IMREAD_GRAYSCALE)
     image = cv2.imread(f"{output_filename_base}.{main_tag}.jpg")
-    clut = cv2.imread("/home/pi/website/weather/scripts/clut.png")
+    clut = cv2.imread(local_path / "clut.png")
 
     _, mask = cv2.threshold(ir, THRESHOLD, 255, cv2.THRESH_BINARY_INV)
     image[np.where(mask == 255)] = [clut[0][int(value)] for value in ir[np.where(mask == 255)] * [255] / [THRESHOLD]]
@@ -80,6 +82,8 @@ def METEOR(pass_info, output_filename_base):
 #######################################
 # records and decodes NOAA APT satellites given the json file for the pass and the output file name, then returns the images' file paths
 def NOAA(pass_info, output_filename_base):
+    local_path = Path(__file__).parent
+
     # set variables
     duration = pass_info["duration"]
     frequency = pass_info["frequency"]
@@ -90,7 +94,7 @@ def NOAA(pass_info, output_filename_base):
 
     # record the pass with rtl_fm
     print(f"writing to file: {output_filename_base}.wav")
-    os.system(f"timeout {duration} /usr/bin/rtl_fm -d 0 -f {frequency} -g 49.6 -s 37000 -E deemp -F 9 - | sox -traw -esigned -c1 -b16 -r37000 - {output_filename_base}.wav rate 11025")
+    os.system(f"timeout {duration} /usr/local/bin/rtl_fm -d 0 -f {frequency} -g 49.6 -s 37000 -E deemp -F 9 - | sox -traw -esigned -c1 -b16 -r37000 - {output_filename_base}.wav rate 11025")
 
     # check if the wav file was properly created
     if os.path.isfile(f"{output_filename_base}.wav") == True and os.stat(f"{output_filename_base}.wav").st_size > 10:
@@ -102,7 +106,7 @@ def NOAA(pass_info, output_filename_base):
     # create map overlay
     print("creating map")
     date = (datetime.utcfromtimestamp(aos)+timedelta(0, 90)).strftime("%d %b %Y %H:%M:%S")
-    os.system(f"/usr/local/bin/wxmap -T \"{satellite}\" -H /home/pi/website/weather/scripts/active.tle -p 0 -l 0 -g 0 -o \"{date}\" {output_filename_base}-map.png")
+    os.system(f"/usr/local/bin/wxmap -T \"{satellite}\" -H {local_path / 'active.tle'} -p 0 -l 0 -g 0 -o \"{date}\" {output_filename_base}-map.png")
 
     # create images
     os.system(f"/usr/local/bin/wxtoimg -m {output_filename_base}-map.png -A -i JPEG -a -e contrast {output_filename_base}.wav {output_filename_base}.a.jpg")

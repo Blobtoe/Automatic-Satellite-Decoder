@@ -7,6 +7,7 @@ from datetime import datetime
 import sched
 import sys
 import ephem
+from pathlib import Path
 
 # local imports
 import process
@@ -15,17 +16,18 @@ import process
 
 
 def start(hours):
+    local_path = Path(__file__).parent
     log("Started scheduling")
 
     # get coordinates from secrets file
-    with open("/home/pi/website/weather/scripts/secrets.json", "r") as f:
+    with open(local_path / "secrets.json", "r") as f:
         data = json.load(f)
         lat = data["lat"]
         lon = data["lon"]
         elev = data["alt"]
 
     # get the satellites to be scheduled
-    with open("/home/pi/website/weather/scripts/config.json", "r") as f:
+    with open(local_path / "config.json", "r") as f:
         data = json.load(f)
         satellites = data["satellites"]
         min_elev = data["minimum elevation"]
@@ -117,7 +119,7 @@ def start(hours):
 
     log("Writing to file")
     # write the passes to the json file
-    json.dump(data, open("/home/pi/website/weather/scripts/scheduled_passes.json", "w"), indent=4, sort_keys=True)
+    json.dump(data, open(local_path / "scheduled_passes.json", "w"), indent=4, sort_keys=True)
 
     # schedule the passes using sched
     s = sched.scheduler(time.time, time.sleep)

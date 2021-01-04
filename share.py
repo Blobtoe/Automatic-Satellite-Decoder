@@ -8,11 +8,13 @@ from imgurpython import ImgurClient
 from discord_webhook import DiscordWebhook, DiscordEmbed
 import requests
 from datetime import datetime
+from pathlib import Path
 
 
 #######################################
 # sends a message to a discord webhook given the json file for the pass and the webhook url
 def discord_webhook(pass_info):
+    local_path = Path(__file__).parent
 
     print("sharing to discord")
 
@@ -32,7 +34,7 @@ def discord_webhook(pass_info):
     embed.add_embed_field(name="Other Image Links", value=links_string)
 
     # send to every discord webhook we have
-    with open("/home/pi/website/weather/scripts/secrets.json") as f:
+    with open(local_path / "secrets.json") as f:
         for webhook_url in json.load(f)["discord_webhook_urls"]:
             webhook = DiscordWebhook(url=webhook_url, username="Blobtoe's Kinda Crappy Images")
             webhook.add_embed(embed)
@@ -44,6 +46,7 @@ def discord_webhook(pass_info):
 #######################################
 # uploads an image to imgur given the json file for the pass and the image's file path, then returns the link
 def imgur(path, image):
+    local_path = Path(__file__).parent
     print("sharing to imgur")
 
     # check if the file exists
@@ -58,7 +61,7 @@ def imgur(path, image):
                                          data["max_elevation"], data["aos"])
 
     # get imgur credentials from secrets.json
-    with open("/home/pi/website/weather/scripts/secrets.json") as f:
+    with open(local_path / "secrets.json") as f:
         data = json.load(f)
         client_id = data["imgur_id"]
         client_secret = data["imgur_secret"]
@@ -88,8 +91,9 @@ def imgur(path, image):
 #######################################
 # uploads an image to imgbb.com given the image's file pathm, then return a link
 def imgbb(image):
+    local_path = Path(__file__).parent
     with open(image, "rb") as file:
-        with open("/home/pi/website/weather/scripts/secrets.json") as s:
+        with open(local_path / "secrets.json") as s:
             payload = {
                 "key": json.load(s)["imgbb_id"],
                 "image": base64.b64encode(file.read()),

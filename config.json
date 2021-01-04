@@ -1,4 +1,5 @@
 {
+    "output folder": "/home/pi/drive/weather/images/",
     "minimum elevation": 20,
     "satellites": {
         "NOAA 15": {

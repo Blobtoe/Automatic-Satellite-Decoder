@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import ephem
 import piexif
 import piexif.helper
+from pathlib import Path
 
 # local imports
 import process_satellite
@@ -15,11 +16,12 @@ from utils import log
 
 
 def start(pass_info):
+    local_path = Path(__file__).parent
 
     log(f"Started processing {pass_info['max_elevation']}° {pass_info['satellite']} pass at {datetime.fromtimestamp(pass_info['aos']).strftime('%B %-d, %Y at %-H:%M:%S')}")
 
     # load private info from secrets.json
-    with open("/home/pi/website/weather/scripts/secrets.json") as f:
+    with open(local_path / "secrets.json") as f:
         data = json.load(f)
         lat = data["lat"]
         lon = data["lon"]
@@ -37,7 +39,9 @@ def start(pass_info):
     # string used for naming the parent folder
     day = datetime.fromtimestamp(pass_info["aos"]).strftime("%Y-%m-%d")
     # the name of the folder where the output files will be created
-    output_folder = f"/home/pi/drive/weather/images/{day}/{local_time}"
+    with open(local_path / "config.json") as f:
+        data = json.load(f)
+        output_folder = f"{data['output folder']}{day}/{local_time}"
     # the base name of the output files
     output_filename_base = f"{output_folder}/{local_time}"
     # the name of the json file containing all the info about the pass
@@ -91,7 +95,7 @@ def start(pass_info):
     '''
 
     # append the pass to the passes list
-    with open("/home/pi/website/weather/images/passes.json", "r+") as f:
+    with open(f"{output_folder}/passes.json", "r+") as f:
         data = json.load(f)
         data.append(f"{output_filename_base}.json")
         json.dump(data, f, indent=4, sort_keys=True)
@@ -107,9 +111,10 @@ def start(pass_info):
     log(f"Finished processing {max_elevation}° {sat} pass at {datetime.fromtimestamp(pass_info['aos']).strftime('%B %-d, %Y at %-H:%M:%S')}")
 
     # get info about next pass
+    '''
     next_pass = {}
     for p in json.load(
-            open("/home/pi/website/weather/scripts/daily_passes.json")):
+            open(local_path / "scheduled_passes.json")):
         if p["status"] == "INCOMING":
             next_pass = p
             break
@@ -124,3 +129,4 @@ def start(pass_info):
             datetime.fromtimestamp(next_pass['aos']).strftime(
                 "%B %-d, %Y at %-H:%M:%S"), next_pass['max_elevation'],
             next_pass['satellite']))
+'''
