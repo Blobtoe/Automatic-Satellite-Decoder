@@ -95,9 +95,10 @@ def start(pass_info):
     '''
 
     # append the pass to the passes list
-    with open(f"{output_folder}/passes.json", "r+") as f:
+    with open(f"{local_path}/passes.json", "r+") as f:
         data = json.load(f)
         data.append(f"{output_filename_base}.json")
+        f.seek(0)
         json.dump(data, f, indent=4, sort_keys=True)
 
     # commit changes to git repository

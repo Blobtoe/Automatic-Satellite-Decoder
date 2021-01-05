@@ -24,7 +24,7 @@ def start(hours):
         data = json.load(f)
         lat = data["lat"]
         lon = data["lon"]
-        elev = data["alt"]
+        elev = data["elev"]
 
     # get the satellites to be scheduled
     with open(local_path / "config.json", "r") as f:
@@ -42,6 +42,7 @@ def start(hours):
     passes = []
     # go over overy satellite specified
     for satellite in satellites:
+        satellite = satellites[satellite]
         # go over every pass of the satellite
         for p in predict.transits(parse_tle("active.tle", satellite["name"]), loc, time.time() + 900, time.time() + (3600 * hours)):
             # if their peak elevation is higher than 20 degrees, add them to the list of passes
@@ -59,7 +60,7 @@ def start(hours):
     # turn the info into json data
     data = []
     for p in passes:
-        satellite_name = p.peak()["name"]
+        satellite_name = p.peak()["name"].strip()
         satellite_info = satellites[satellite_name]
 
         # compute the sun elevation at peak elevation
@@ -126,7 +127,7 @@ def start(hours):
     i = 0
     for p in data:
         # create a job for every pass
-        log(f"Scheduled a job for {p['aos']} or {datetime.fromtimestamp(p['aos']).strftime('% B % -d, % Y at % -H: % M: % S % Z')}")
+        log(f"Scheduled a job for {p['aos']} or {datetime.fromtimestamp(p['aos']).strftime('%B %-d, %Y at %-H:%M:%S')}")
         s.enterabs(p["aos"], 1, process.start, argument=(p, ))
         i += 1
 
