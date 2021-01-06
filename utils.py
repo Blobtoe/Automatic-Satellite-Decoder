@@ -45,4 +45,4 @@ def bmp_to_jpg(bmp_filename):
     # load bmp
     bmp = Image.open(bmp_filename)
     # save as jpg
-    bmp.save("".join(bmp_filename.split(".")[:-1]) + ".jpg")
+    bmp.save(".".join(bmp_filename.split(".")[:-1]) + ".jpg")
