@@ -65,7 +65,7 @@ def METEOR(pass_info, output_filename_base):
     THRESHOLD = 25
     ir = cv2.imread(f"{output_filename_base}.ir.jpg", cv2.IMREAD_GRAYSCALE)
     image = cv2.imread(f"{output_filename_base}.{main_tag}.jpg")
-    clut = cv2.imread(local_path / "clut.png")
+    clut = cv2.imread(str(local_path / "clut.png"))
 
     _, mask = cv2.threshold(ir, THRESHOLD, 255, cv2.THRESH_BINARY_INV)
     image[np.where(mask == 255)] = [clut[0][int(value)] for value in ir[np.where(mask == 255)] * [255] / [THRESHOLD]]
