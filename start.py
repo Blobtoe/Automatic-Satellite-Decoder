@@ -7,8 +7,8 @@ run flask server and start the scheduler
 import time
 
 # local imports
-from passscheduler import PassScheduler
+from PassScheduler import PassScheduler
 
 scheduler = PassScheduler()
 scheduler.start()
-time.sleep(100000000000)
+time.sleep(10000)

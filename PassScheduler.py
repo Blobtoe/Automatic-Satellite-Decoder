@@ -131,6 +131,7 @@ class PassScheduler:
     def start(self):
         '''Starts processing the passes in a new process'''
         self.process = multiprocessing.Process(target=self.run_process, args=())
+        self.process.start()
 
     def run_process(self):
         '''target function for parallel process'''
