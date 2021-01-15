@@ -100,13 +100,12 @@ def NOAA(pass_info, output_filename_base):
     if os.path.isfile(f"{output_filename_base}.wav") == True and os.stat(f"{output_filename_base}.wav").st_size > 10:
         pass
     else:
-        print("wav file was not created correctly. Aborting")
-        exit()
+        raise Exception("wav file was not created correctly. Aborting")
 
     # create map overlay
     print("creating map")
     date = (datetime.utcfromtimestamp(aos)+timedelta(0, 90)).strftime("%d %b %Y %H:%M:%S")
-    os.system(f"/usr/local/bin/wxmap -T \"{satellite}\" -H {local_path / 'active.tle'} -p 0 -l 0 -g 0 -o \"{date}\" {output_filename_base}-map.png")
+    os.system(f"/usr/local/bin/wxmap -T \"{satellite}\" -H \"{local_path / 'active.tle'}\" -p 0 -l 0 -g 0 -o \"{date}\" \"{output_filename_base}-map.png\"")
 
     # create images
     os.system(f"/usr/local/bin/wxtoimg -m {output_filename_base}-map.png -A -i JPEG -a -e contrast {output_filename_base}.wav {output_filename_base}.a.jpg")
