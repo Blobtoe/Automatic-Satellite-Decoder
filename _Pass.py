@@ -55,10 +55,10 @@ class Pass:
 
         # process APT
         if self.type == "APT":
-            images, main_tag = process_satellite.NOAA(self.info, output_filename_base)
+            images, main_tag = process_satellite.NOAA(self, output_filename_base)
         # process LRPT
         elif self.type == "LRPT":
-            images, main_tag = process_satellite.METEOR(self.info, output_filename_base)
+            images, main_tag = process_satellite.METEOR(self, output_filename_base)
 
         # upload each image to the internet
         links = {}

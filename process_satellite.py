@@ -12,18 +12,13 @@ from pathlib import Path
 from utils import log, bmp_to_jpg
 
 
-#######################################
-# records, demodulates, and decodes METEOR-M 2 given the json file for the pass and the output file name, then returns the image's file path
-def METEOR(pass_info, output_filename_base):
+def METEOR(_pass, output_filename_base):
+    '''records, demodulates, and decodes METEOR-M 2 given the Pass object for the pass and the output file name, then returns the image's file path'''
     local_path = Path(__file__).parent
-    # get pass info
-    duration = pass_info["duration"]
-    frequency = pass_info["frequency"]
-    sun_elev = pass_info["sun_elev"]
 
     # record pass baseband with rtl_fm
     print("recording pass...")
-    os.system(f"timeout {duration} /usr/local/bin/rtl_fm -M raw -s 110k -f {frequency} -E dc -g 49.6 -p 0 - | sox -t raw -r 110k -c 2 -b 16 -e s - -t wav {output_filename_base}.iq.wav rate 192k")
+    os.system(f"timeout {_pass.duration} /usr/local/bin/rtl_fm -M raw -s 110k -f {_pass.frequency} -E dc -g 49.6 -p 0 - | sox -t raw -r 110k -c 2 -b 16 -e s - -t wav {output_filename_base}.iq.wav rate 192k")
 
     # demodulate the signal
     print("demodulating meteor signal...")
@@ -58,7 +53,7 @@ def METEOR(pass_info, output_filename_base):
     os.rename(f"{output_filename_base}.ir-rectified.jpg", f"{output_filename_base}.ir.jpg")
 
     main_tag = "rgb122"
-    if sun_elev <= 10:
+    if _pass.sun_elev <= 10:
         main_tag = "ir"
 
     # add precipitaion overlay to main image
@@ -79,22 +74,13 @@ def METEOR(pass_info, output_filename_base):
     ], f"{main_tag}-precip"
 
 
-#######################################
-# records and decodes NOAA APT satellites given the json file for the pass and the output file name, then returns the images' file paths
-def NOAA(pass_info, output_filename_base):
+def NOAA(_pass, output_filename_base):
+    '''records and decodes NOAA APT satellites given the Pass object for the pass and the output file name, then returns the images' file paths'''
     local_path = Path(__file__).parent
-
-    # set variables
-    duration = pass_info["duration"]
-    frequency = pass_info["frequency"]
-    satellite = pass_info["satellite"]
-    aos = pass_info["aos"]
-    max_elevation = pass_info["max_elevation"]
-    sun_elev = pass_info["sun_elev"]
 
     # record the pass with rtl_fm
     print(f"writing to file: {output_filename_base}.wav")
-    os.system(f"timeout {duration} /usr/local/bin/rtl_fm -d 0 -f {frequency} -g 49.6 -s 37000 -E deemp -F 9 - | sox -traw -esigned -c1 -b16 -r37000 - {output_filename_base}.wav rate 11025")
+    os.system(f"timeout {_pass.duration} /usr/local/bin/rtl_fm -d 0 -f {_pass.frequency} -g 49.6 -s 37000 -E deemp -F 9 - | sox -traw -esigned -c1 -b16 -r37000 - {output_filename_base}.wav rate 11025")
 
     # check if the wav file was properly created
     if os.path.isfile(f"{output_filename_base}.wav") == True and os.stat(f"{output_filename_base}.wav").st_size > 10:
@@ -104,8 +90,8 @@ def NOAA(pass_info, output_filename_base):
 
     # create map overlay
     print("creating map")
-    date = (datetime.utcfromtimestamp(aos)+timedelta(0, 90)).strftime("%d %b %Y %H:%M:%S")
-    os.system(f"/usr/local/bin/wxmap -T \"{satellite}\" -H \"{local_path / 'active.tle'}\" -p 0 -l 0 -g 0 -o \"{date}\" \"{output_filename_base}-map.png\"")
+    date = (datetime.utcfromtimestamp(_pass.aos)+timedelta(0, 90)).strftime("%d %b %Y %H:%M:%S")
+    os.system(f"/usr/local/bin/wxmap -T \"{_pass.satellite_name}\" -H \"{local_path / 'active.tle'}\" -p 0 -l 0 -g 0 -o \"{date}\" \"{output_filename_base}-map.png\"")
 
     # create images
     os.system(f"/usr/local/bin/wxtoimg -m {output_filename_base}-map.png -A -i JPEG -a -e contrast {output_filename_base}.wav {output_filename_base}.a.jpg")
@@ -116,9 +102,9 @@ def NOAA(pass_info, output_filename_base):
     os.system(f"/usr/local/bin/wxtoimg -m {output_filename_base}-map.png -A -i JPEG {output_filename_base}.wav {output_filename_base}.raw.jpg")
 
     # change the main image depending on the sun elevation
-    if sun_elev <= 10:
+    if _pass.sun_elev <= 10:
         main_tag = "b"
-    elif sun_elev <= 30 or max_elevation <= 30:
+    elif _pass.sun_elev <= 30 or _pass.max_elevation <= 30:
         main_tag = "HVCT"
     else:
         main_tag = "MSA-precip"
