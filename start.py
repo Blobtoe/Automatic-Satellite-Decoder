@@ -4,6 +4,7 @@ run flask server and start the scheduler
 
 '''
 from flask import Flask, request, abort, render_template
+import json
 
 # local imports
 from PassScheduler import PassScheduler
@@ -14,7 +15,7 @@ scheduler = PassScheduler()
 
 @app.route('/', methods=['GET'])
 def home():
-    return scheduler.passes
+    return [p.info for p in scheduler.passes]
 
 
 if __name__ == "__main__":
