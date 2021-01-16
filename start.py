@@ -4,6 +4,11 @@ run flask server and start the scheduler
 
 '''
 
-import schedule_passes
-while True:
-    schedule_passes.start(24)
+import time
+
+# local imports
+from PassScheduler import PassScheduler
+
+scheduler = PassScheduler()
+scheduler.start()
+time.sleep(10000)
