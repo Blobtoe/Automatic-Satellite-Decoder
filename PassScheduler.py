@@ -15,7 +15,7 @@ from _Pass import Pass
 
 class PassScheduler:
 
-    def __init__(self):
+    def schedule(self):
         '''Schedules passes for every satellite in the config file.'''
         local_path = Path(__file__).parent
 
