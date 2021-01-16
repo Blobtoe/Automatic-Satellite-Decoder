@@ -3,7 +3,7 @@
 run flask server and start the scheduler
 
 '''
-from flask import Flask, request, abort, render_template
+from flask import Flask, jsonify
 import json
 
 # local imports
@@ -15,7 +15,7 @@ scheduler = PassScheduler()
 
 @app.route('/', methods=['GET'])
 def home():
-    return [p.info for p in scheduler.passes]
+    return jsonify([p.info for p in scheduler.passes])
 
 
 if __name__ == "__main__":
