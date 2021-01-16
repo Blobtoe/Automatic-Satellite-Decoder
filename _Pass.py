@@ -103,4 +103,4 @@ class Pass:
             json.dump(data, f, indent=4, sort_keys=True)
 
         # send status to console
-        log(f"Finished processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(pass_info['aos']).strftime('%B %-d, %Y at %-H:%M:%S')}")
+        log(f"Finished processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
