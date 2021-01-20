@@ -1,12 +1,12 @@
 {
     "output folder": "/home/pi/drive/weather/images/",
-    "minimum elevation": 20,
     "satellites": {
         "NOAA 15": {
             "name": "NOAA 15",
             "type": "APT",
             "frequency": 137620000,
             "priority": 0,
+            "minimum elevation": 20,
             "share to": [
                 "imgbb",
                 "website",
@@ -26,6 +26,7 @@
             "type": "APT",
             "frequency": 137912500,
             "priority": 0,
+            "minimum elevation": 20,
             "share to": [
                 "imgbb",
                 "website",
@@ -45,6 +46,7 @@
             "type": "APT",
             "frequency": 137100000,
             "priority": 0,
+            "minimum elevation": 20,
             "share to": [
                 "imgbb",
                 "website",
@@ -64,6 +66,7 @@
             "type": "LRPT",
             "frequency": 137100000,
             "priority": 30,
+            "minimum elevation": 20,
             "share to": [
                 "imgbb",
                 "website",
