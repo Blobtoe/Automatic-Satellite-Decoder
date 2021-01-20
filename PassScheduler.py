@@ -17,9 +17,7 @@ local_path = Path(__file__).parent
 
 class PassScheduler:
 
-    def schedule(self):
-        '''Schedules passes for every satellite in the config file.'''
-
+    def __init__(self):
         # get coordinates from secrets file
         lat = utils.get_secrets()["lat"]
         lon = utils.get_secrets()["lon"]
@@ -27,6 +25,9 @@ class PassScheduler:
 
         # set the ground station location
         self.loc = (lat, lon * -1, elev)
+
+    def schedule(self):
+        '''Schedules passes for every satellite in the config file.'''
 
         # get the satellites to be scheduled
         satellites = utils.get_config()["satellites"]
@@ -110,7 +111,7 @@ class PassScheduler:
         for predictor in predictors:
             predictor = predictors[predictor]
             first_pass = next(predictor["transits"])
-            while predictor["minimum elevation"] > first_pass.peak()["elevation"]:
+            while predictor["minimum elevation"] > first_pass.peak()["elevation"] and first_pass.start > time.time():
                 first_pass = next(predictor["transits"])
             first_passes.append(utils.parse_pass_info(first_pass))
         # sort the passes by their start time
@@ -131,16 +132,17 @@ class PassScheduler:
                     first_passes.pop(i)
                     # calculate the next pass above the minimum elevation
                     next_pass = next(predictors[p["satellite"]]["transits"])
-                    while predictors[p["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"]:
+                    while predictors[p["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"] and next_pass.start > time.time():
                         next_pass = next(predictors[p["satellite"]]["transits"])
                     # add the pass to the list
                     first_passes.append(utils.parse_pass_info(next_pass))
+
                 elif priority2 > priority1:
                     # remove the overlapping pass from the list
                     first_passes.pop(0)
                     # calculate the next pass above the minimum elevation
                     next_pass = next(predictors[first_passes[0]["satellite"]]["transits"])
-                    while predictors[first_passes[0]["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"]:
+                    while predictors[first_passes[0]["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"] and next_pass.start > time.time():
                         next_pass = next(predictors[first_passes[0]["satellite"]]["transits"])
                     # add the pass to the list
                     first_passes.append(utils.parse_pass_info(next_pass))
@@ -150,7 +152,10 @@ class PassScheduler:
                 # reset the counter
                 i = 1
 
-        # return the first pass in the list
+            else:
+                i += 1
+
+                # return the first pass in the list
         return first_passes[0]
 
     def run_process(self):
