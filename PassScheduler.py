@@ -22,15 +22,14 @@ class PassScheduler:
         lat = utils.get_secrets()["lat"]
         lon = utils.get_secrets()["lon"]
         elev = utils.get_secrets()["elev"]
-
         # set the ground station location
         self.loc = (lat, lon * -1, elev)
 
+        # get the satellites to be scheduled
+        self.satellites = utils.get_config()["satellites"]
+
     def schedule(self):
         '''Schedules passes for every satellite in the config file.'''
-
-        # get the satellites to be scheduled
-        satellites = utils.get_config()["satellites"]
 
         # get the tle file form celestrak
         utils.download_tle()
@@ -38,11 +37,11 @@ class PassScheduler:
         utils.log("Calculating transits")
         passes = []
         # go over overy satellite specified
-        for satellite in satellites:
-            satellite = satellites[satellite]
+        for satellite in self.satellites:
+            satellite = self.satellites[satellite]
 
             # set minimum elevation to schedule passes
-            min_elev = utils.get_config()["satellites"][satellite]["minimum elevation"]
+            min_elev = satellite["minimum elevation"]
 
             # go over every pass of the satellite
             for p in predict.transits(utils.parse_tle(local_path / "active.tle", satellite["name"]), self.loc, time.time() + 900, time.time() + (3600 * 24)):
@@ -83,27 +82,22 @@ class PassScheduler:
         for p in data:
             self.passes.append(Pass(p))
 
-    def start(self):
-        '''Starts processing the passes in a new process.'''
-        self.process = multiprocessing.Process(target=self.run_process, args=())
-        self.process.start()
+    def get_next_pass(self, after=time.time()):
+        '''Returns a Pass object of the next scheduled pass.'''
 
-    def get_next_pass(self):
-        '''Returns information about the next scheduled pass.'''
-
-        # get the satellites to be scheduled
-        satellites = utils.get_config()["satellites"]
+        # download a new tle file
+        utils.download_tle()
 
         utils.log("Calculating transits")
         predictors = {}
         # go over overy satellite specified
-        for satellite in satellites:
-            satellite = satellites[satellite]
+        for satellite in self.satellites:
+            satellite = self.satellites[satellite]
 
             # store the specified minimum elevation and the transits iterator in a dict
             predictors[satellite["name"]] = {
                 "minimum elevation": satellite["minimum elevation"],
-                "transits": predict.transits(utils.parse_tle(local_path / "active.tle", satellite["name"]), self.loc)
+                "transits": predict.transits(utils.parse_tle(local_path / "active.tle", satellite["name"]), self.loc, ending_after=after)
             }
 
         # get the first pass of every predictor
@@ -111,7 +105,7 @@ class PassScheduler:
         for predictor in predictors:
             predictor = predictors[predictor]
             first_pass = next(predictor["transits"])
-            while predictor["minimum elevation"] > first_pass.peak()["elevation"] and first_pass.start > time.time():
+            while predictor["minimum elevation"] > first_pass.peak()["elevation"] and first_pass.start > after:
                 first_pass = next(predictor["transits"])
             first_passes.append(utils.parse_pass_info(first_pass))
         # sort the passes by their start time
@@ -132,7 +126,7 @@ class PassScheduler:
                     first_passes.pop(i)
                     # calculate the next pass above the minimum elevation
                     next_pass = next(predictors[p["satellite"]]["transits"])
-                    while predictors[p["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"] and next_pass.start > time.time():
+                    while predictors[p["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"] and next_pass.start > after:
                         next_pass = next(predictors[p["satellite"]]["transits"])
                     # add the pass to the list
                     first_passes.append(utils.parse_pass_info(next_pass))
@@ -142,7 +136,7 @@ class PassScheduler:
                     first_passes.pop(0)
                     # calculate the next pass above the minimum elevation
                     next_pass = next(predictors[first_passes[0]["satellite"]]["transits"])
-                    while predictors[first_passes[0]["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"] and next_pass.start > time.time():
+                    while predictors[first_passes[0]["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"] and next_pass.start > after:
                         next_pass = next(predictors[first_passes[0]["satellite"]]["transits"])
                     # add the pass to the list
                     first_passes.append(utils.parse_pass_info(next_pass))
@@ -156,14 +150,25 @@ class PassScheduler:
                 i += 1
 
                 # return the first pass in the list
-        return first_passes[0]
+        return Pass(first_passes[0])
 
-    def run_process(self):
+    def start(self):
+        '''Starts processing the passes in a new process.'''
+        self.process = multiprocessing.Process(target=self._run_process, args=())
+        self.process.start()
+
+    def _run_process(self):
         '''target function for parallel process'''
-        for p in self.passes:
-            utils.log(f"Waiting until {datetime.fromtimestamp(p.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {p.max_elevation}° {p.satellite_name} pass...")
-            pause.until(p.aos)
-            p.process()
+
+        # loop forever (or until the process is terminated)
+        while True:
+            # get the next pass to process
+            next_pass = self.get_next_pass()
+            # wait until the pass starts
+            utils.log(f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass...")
+            pause.until(next_pass.aos)
+            # start processing the pass
+            next_pass.process()
 
     def stop(self):
         '''Stops the scheduler. If a pass is in progress, it will stop after completion of the pass.'''
