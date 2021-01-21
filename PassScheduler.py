@@ -28,60 +28,6 @@ class PassScheduler:
         # get the satellites to be scheduled
         self.satellites = utils.get_config()["satellites"]
 
-    def schedule(self):
-        '''Schedules passes for every satellite in the config file.'''
-
-        # get the tle file form celestrak
-        utils.download_tle()
-
-        utils.log("Calculating transits")
-        passes = []
-        # go over overy satellite specified
-        for satellite in self.satellites:
-            satellite = self.satellites[satellite]
-
-            # set minimum elevation to schedule passes
-            min_elev = satellite["minimum elevation"]
-
-            # go over every pass of the satellite
-            for p in predict.transits(utils.parse_tle(local_path / "active.tle", satellite["name"]), self.loc, time.time() + 900, time.time() + (3600 * 24)):
-                # if their peak elevation is higher than the minimum elevation degrees, add them to the list of passes
-                if p.peak()["elevation"] >= min_elev:
-                    passes.append(p)
-
-        # sort the passes by their start time
-        passes.sort(key=lambda x: x.start)
-
-        # turn the info into json data
-        data = []
-        for p in passes:
-            data.append(utils.parse_pass_info(p))
-
-        # check if passes overlap and choose which one to prioritize
-        i = 0
-        while i < len(data) - 2:
-            if data[i]["los"] > data[i + 1]["aos"]:
-                # calculate the priorities (max elevation + preset priority) (higher elevation passes have more priority)
-                priority1 = data[i]["max_elevation"] + data[i]["priority"]
-                priority2 = data[i + 1]["max_elevation"] + data[i + 1]["priority"]
-
-                # keep the pass with highest priority
-                if priority1 >= priority2:
-                    data.pop(i + 1)
-                elif priority2 > priority1:
-                    data.pop(i)
-            else:
-                i += 1
-
-        # write the passes to the json file
-        utils.log("Writing pass information to scheduled_passes.json")
-        json.dump(data, open(local_path / "scheduled_passes.json", "w"), indent=4, sort_keys=True)
-
-        # convert json data to pass object
-        self.passes = []
-        for p in data:
-            self.passes.append(Pass(p))
-
     def get_next_pass(self, after=time.time()):
         '''Returns a Pass object of the next scheduled pass.'''
 
