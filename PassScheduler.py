@@ -109,12 +109,12 @@ class PassScheduler:
         # loop forever (or until the process is terminated)
         while True:
             # get the next pass to process
-            next_pass = self.get_next_pass()
+            self.next_pass = self.get_next_pass()
             # wait until the pass starts
-            utils.log(f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass...")
-            pause.until(next_pass.aos)
+            utils.log(f"Waiting until {datetime.fromtimestamp(self.next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {self.next_pass.max_elevation}° {self.next_pass.satellite_name} pass...")
+            pause.until(self.next_pass.aos)
             # start processing the pass
-            next_pass.process()
+            self.next_pass.process()
 
     def stop(self):
         '''Stops the scheduler. If a pass is in progress, it will stop after completion of the pass.'''

@@ -13,9 +13,9 @@ app = Flask(__name__)
 scheduler = PassScheduler()
 
 
-@app.route('/', methods=['GET'])
+@app.route('/next/pass', methods=['GET'])
 def home():
-    return jsonify([p.info for p in scheduler.passes])
+    return jsonify(scheduler.next_pass.info)
 
 
 if __name__ == "__main__":
