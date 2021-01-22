@@ -120,7 +120,7 @@ class PassScheduler:
                 i = 1
 
         # return the first pass in the list
-        return passes[0] if len(passes) == 1 else passes
+        return Pass(passes[0]) if len(passes) == 1 else [Pass(p) for p in passes]
 
     def start(self):
         '''Starts processing the passes in a new process.'''
