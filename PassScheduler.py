@@ -71,7 +71,7 @@ class PassScheduler:
         passes = []
         # go over the first passes
         i = 1
-        while i < len(first_passes) and len(passes) <= pass_count:
+        while i < len(first_passes) and len(passes) < pass_count:
             p = first_passes[i]
             if first_passes[0]["los"] > p["aos"]:
                 # calculate the priorities (max elevation + preset priority) (higher elevation passes have more priority)
