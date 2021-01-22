@@ -1,5 +1,6 @@
 {
     "output folder": "/home/pi/drive/weather/images/",
+    "tle update frequency": 12,
     "satellites": {
         "NOAA 15": {
             "name": "NOAA 15",

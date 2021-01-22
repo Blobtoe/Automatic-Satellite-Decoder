@@ -15,7 +15,7 @@ scheduler = PassScheduler()
 
 @app.route('/next/pass', methods=['GET'])
 def home():
-    return jsonify(scheduler.next_pass.info)
+    return jsonify(scheduler.get_next_pass().info)
 
 
 if __name__ == "__main__":
