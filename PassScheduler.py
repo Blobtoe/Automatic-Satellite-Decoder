@@ -39,6 +39,11 @@ class PassScheduler:
     def get_next_pass(self, after=time.time(), pass_count=1):
         '''Returns a Pass object of the next scheduled pass.'''
 
+        if after == None:
+            after = time.time()
+        if pass_count == None:
+            pass_count = 1
+
         # download a new tle file if needed
         if time.time() - self.tle_updated_time > self.tle_update_frequency * 3600:
             utils.download_tle()
