@@ -36,7 +36,7 @@ class PassScheduler:
         self.tle_updated_time = time.time()
         self.tle_update_frequency = utils.get_config()["tle update frequency"]
 
-    def get_next_pass(self, after=time.time()):
+    def get_next_pass(self, after=time.time(), pass_count=1):
         '''Returns a Pass object of the next scheduled pass.'''
 
         # download a new tle file if needed
@@ -59,16 +59,19 @@ class PassScheduler:
         first_passes = []
         for predictor in predictors:
             predictor = predictors[predictor]
+            # get the first pass above the minimum elevation and that starts after the specified time
             first_pass = next(predictor["transits"])
             while predictor["minimum elevation"] > first_pass.peak()["elevation"] or first_pass.start < after:
                 first_pass = next(predictor["transits"])
+            # parse information from the pass and add it to the list
             first_passes.append(utils.parse_pass_info(first_pass))
         # sort the passes by their start time
         first_passes.sort(key=lambda x: x["aos"])
 
+        passes = []
         # go over the first passes
         i = 1
-        while i < len(first_passes):
+        while i < len(first_passes) and len(passes) <= pass_count:
             p = first_passes[i]
             if first_passes[0]["los"] > p["aos"]:
                 # calculate the priorities (max elevation + preset priority) (higher elevation passes have more priority)
@@ -77,24 +80,20 @@ class PassScheduler:
 
                 # keep the pass with highest priority
                 if priority1 >= priority2:
-                    # remove the overlapping pass from the list
-                    first_passes.pop(i)
                     # calculate the next pass above the minimum elevation
                     next_pass = next(predictors[p["satellite"]]["transits"])
                     while predictors[p["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"] or next_pass.start < after:
                         next_pass = next(predictors[p["satellite"]]["transits"])
-                    # add the pass to the list
-                    first_passes.append(utils.parse_pass_info(next_pass))
+                    # replace the pass in the list
+                    first_passes[i] = utils.parse_pass_info(next_pass)
 
                 elif priority2 > priority1:
-                    # remove the overlapping pass from the list
-                    first_passes.pop(0)
                     # calculate the next pass above the minimum elevation
                     next_pass = next(predictors[first_passes[0]["satellite"]]["transits"])
                     while predictors[first_passes[0]["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"] or next_pass.start < after:
                         next_pass = next(predictors[first_passes[0]["satellite"]]["transits"])
-                    # add the pass to the list
-                    first_passes.append(utils.parse_pass_info(next_pass))
+                    # replace the pass in the list
+                    first_passes[0] = utils.parse_pass_info(next_pass)
 
                 # re-sort the list by their start time
                 first_passes.sort(key=lambda x: x["aos"])
@@ -104,8 +103,24 @@ class PassScheduler:
             else:
                 i += 1
 
-                # return the first pass in the list
-        return Pass(first_passes[0])
+            # if we gone through all the first_passes list (found a good pass)
+            if i >= len(first_passes):
+                # add the pass the final passes list
+                passes.append(first_passes[0])
+                # calculate the next pass above the minimum elevation
+                next_pass = next(predictors[first_passes[0]["satellite"]]["transits"])
+                while predictors[first_passes[0]["satellite"]]["minimum elevation"] > next_pass.peak()["elevation"] or next_pass.start < after:
+                    next_pass = next(predictors[first_passes[0]["satellite"]]["transits"])
+                # replace the pass in the list
+                first_passes[0] = utils.parse_pass_info(next_pass)
+
+                # re-sort the list by their start time
+                first_passes.sort(key=lambda x: x["aos"])
+                # reset the counter
+                i = 1
+
+        # return the first pass in the list
+        return passes[0] if len(passes) == 1 else passes
 
     def start(self):
         '''Starts processing the passes in a new process.'''
