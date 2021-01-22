@@ -17,9 +17,12 @@ scheduler = PassScheduler()
 @app.route('/next/pass', methods=['GET'])
 def next_pass():
     try:
-        after = int(request.args.get("after"))
-        pass_count = int(request.args.get("pass_count"))
-        return jsonify(scheduler.get_next_pass(after=after, pass_count=pass_count).info)
+        # read parameters
+        after = int(request.args.get("after")) if request.args.get("after") != None else None
+        pass_count = int(request.args.get("pass_count")) if request.args.get("pass_count") != None else None
+        # return the json info of the requested passes
+        return jsonify(scheduler.get_future_passes(after=after, pass_count=pass_count))
+    # if we run into an error, print the error and return code 400
     except Exception as e:
         utils.log(e)
         return str(e), 400

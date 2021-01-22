@@ -4,3 +4,4 @@ scheduled_passes.json
 active.tle
 __pycache__/
 *.pyc
+.vscode/

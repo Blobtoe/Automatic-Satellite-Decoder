@@ -36,7 +36,7 @@ class PassScheduler:
         self.tle_updated_time = time.time()
         self.tle_update_frequency = utils.get_config()["tle update frequency"]
 
-    def get_next_pass(self, after=time.time(), pass_count=1):
+    def get_future_passes(self, after=time.time(), pass_count=1):
         '''Returns a Pass object of the next scheduled pass.'''
 
         if after == None:
@@ -125,7 +125,7 @@ class PassScheduler:
                 i = 1
 
         # return the first pass in the list
-        return Pass(passes[0]) if len(passes) == 1 else [Pass(p) for p in passes]
+        return [Pass(p) for p in passes]
 
     def start(self):
         '''Starts processing the passes in a new process.'''
@@ -134,7 +134,7 @@ class PassScheduler:
     def _run_process(self):
         '''target function for parallel process'''
 
-        next_pass = self.get_next_pass()
+        next_pass = self.get_future_passes()[0]
 
         # loop forever (or until the process is terminated)
         while True:
@@ -144,7 +144,7 @@ class PassScheduler:
             # start processing the pass
             next_pass.process()
             # get the next pass to process
-            next_pass = self.get_next_pass(after=next_pass.los)
+            next_pass = self.get_future_passes(after=next_pass.los)[0]
 
     def stop(self):
         '''Stops the scheduler. If a pass is in progress, it will stop after completion of the pass.'''
