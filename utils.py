@@ -44,17 +44,6 @@ def parse_tle(tle_file_name, satellite_name):
     return "\n".join(lines[index:index+3])
 
 
-def bmp_to_jpg(bmp_filename):
-    '''
-    converts a bmp to jpg
-    '''
-
-    # load bmp
-    bmp = Image.open(bmp_filename)
-    # save as jpg
-    bmp.save(".".join(bmp_filename.split(".")[:-1]) + ".jpg")
-
-
 def get_config():
     '''returns the json data in the config file'''
 

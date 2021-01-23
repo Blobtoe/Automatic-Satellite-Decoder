@@ -29,12 +29,18 @@ def METEOR(_pass, output_filename_base):
     os.system(f"/usr/local/bin/medet_arm {output_filename_base}.qpsk {output_filename_base}.rgb122 -q -cd -r 65 -g 65 -b 64")
     os.system(f"/usr/local/bin/medet_arm {output_filename_base}.rgb122.dec {output_filename_base}.ir -d -q -r 68 -g 68 -b 68")
 
-    # convert bmp to jpg
-    bmp_to_jpg(f"{output_filename_base}.rgb122.bmp")
-    bmp_to_jpg(f"{output_filename_base}.ir.bmp")
+    # convert bmp to jpg and rotate if nessesary
+    for img in [f"{output_filename_base}.rgb122.bmp", f"{output_filename_base}.ir.bmp"]:
+        # load bmp
+        bmp = Image.open(img)
+        # rotate if nessesary
+        if _pass.direction == "southbound":
+            bmp.rotate(180, expand=True)
+        # save as jpg
+        bmp.save(".".join(img.split(".")[:-1]) + ".jpg")
 
     '''
-    #get rid of the blue tint in the image (thanks to PotatoSalad for the code)
+    # get rid of the blue tint in the image (thanks to PotatoSalad for the code)
     img = Image.open(outfile + ".jpg")
     pix = img.load()
     for y in range(img.size[1]):
