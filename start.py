@@ -29,16 +29,6 @@ def next_pass():
         return str(e), 400
 
 
-@app.route("/images", methods=["GET"])
-def images():
-    try:
-        output_folder = utils.get_config()["output folder"]
-        return os.popen(f"tree -H '{output_folder}' -L 1 --noreport --charset utf-8").read()
-    except Exception as e:
-        utils.log(e)
-        return str(e), 400
-
-
 if __name__ == "__main__":
     scheduler.start()
     app.run(port=5000, host="0.0.0.0")
