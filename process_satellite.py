@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 
 # local imports
-from utils import log, bmp_to_jpg
+from utils import log
 
 
 def METEOR(_pass, output_filename_base):
