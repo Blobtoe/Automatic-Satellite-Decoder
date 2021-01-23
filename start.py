@@ -5,6 +5,7 @@ run flask server and start the scheduler
 '''
 from flask import Flask, jsonify, request
 import json
+import os
 
 # local imports
 from PassScheduler import PassScheduler
@@ -23,6 +24,16 @@ def next_pass():
         # return the json info of the requested passes
         return jsonify([p.info for p in scheduler.get_future_passes(after=after, pass_count=pass_count)])
     # if we run into an error, print the error and return code 400
+    except Exception as e:
+        utils.log(e)
+        return str(e), 400
+
+
+@app.route("/images", methods=["GET"])
+def images():
+    try:
+        output_folder = utils.get_config()["output folder"]
+        return os.popen(f"tree -H '{output_folder}' -L 1 --noreport --charset utf-8").read()
     except Exception as e:
         utils.log(e)
         return str(e), 400
