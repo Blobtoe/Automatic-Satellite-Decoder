@@ -11,9 +11,16 @@
 </head>
 <meta id="data" data='{{ data }}'>
 <body>
-    <div id="jsoneditor" style="width: 400px; height: 400px;"></div>
-    <h1>Configuration</h1>
-    <form action="#" onsubmit="updateConfig();" id="config_form">
-    </form>
+    <h1>Configuration Editor</h1>
+    <div id="jsoneditor" style="width: 100%px; height: 500px;"></div>
+    <input type="button" value="Update" onclick="updateConfig();">
+    <input type="button" value="Reload" onclick="getConfig();">
+
+    <h1>Upcoming Passes</h1>
+    <input type="number" name="pass count" id="pass_count" value="1">
+    <input type="button" value="Get Upcoming Passes" onclick="getUpcomingPasses();">
+    <div id="upcoming_passes">
+
+    </div>
 </body>
 </html>

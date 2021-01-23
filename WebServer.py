@@ -44,7 +44,7 @@ def home():
     return render_template("index.html", data={"config": utils.get_config()})
 
 
-@app.route('/next/pass', methods=['GET'])
+@app.route('/get/next/pass', methods=['GET'])
 def next_pass():
     try:
         # read parameters
@@ -60,6 +60,12 @@ def next_pass():
 
 @app.route("/update/config", methods=["POST"])
 def update_config():
-    utils.log(request.form)
-    # with open(local_path / "config.json", "w") as f:
-    # f.write(json.dumps(request.form["data"]))
+    with open(local_path / "config.json", "w") as f:
+        f.write(json.dumps(request.json, indent=4, sort_keys=True))
+    return "Success", 200
+
+
+@app.route("/get/config", methods=["GET"])
+def get_config():
+    with open(local_path / "config.json") as f:
+        return jsonify(json.load(f))

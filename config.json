@@ -1,78 +1,7 @@
 {
     "output folder": "/home/pi/drive/weather/images/",
-    "tle update frequency": 12,
     "satellites": {
-        "NOAA 15": {
-            "name": "NOAA 15",
-            "type": "APT",
-            "frequency": 137620000,
-            "priority": 0,
-            "minimum elevation": 20,
-            "share to": [
-                "imgbb",
-                "website",
-                "discord"
-            ],
-            "create images": [
-                "a",
-                "b",
-                "HVCT",
-                "MSA",
-                "MSA-precip",
-                "raw"
-            ]
-        },
-        "NOAA 18": {
-            "name": "NOAA 18",
-            "type": "APT",
-            "frequency": 137912500,
-            "priority": 0,
-            "minimum elevation": 20,
-            "share to": [
-                "imgbb",
-                "website",
-                "discord"
-            ],
-            "create images": [
-                "a",
-                "b",
-                "HVCT",
-                "MSA",
-                "MSA-precip",
-                "raw"
-            ]
-        },
-        "NOAA 19": {
-            "name": "NOAA 19",
-            "type": "APT",
-            "frequency": 137100000,
-            "priority": 0,
-            "minimum elevation": 20,
-            "share to": [
-                "imgbb",
-                "website",
-                "discord"
-            ],
-            "create images": [
-                "a",
-                "b",
-                "HVCT",
-                "MSA",
-                "MSA-precip",
-                "raw"
-            ]
-        },
         "METEOR-M 2": {
-            "name": "METEOR-M 2",
-            "type": "LRPT",
-            "frequency": 137100000,
-            "priority": 30,
-            "minimum elevation": 20,
-            "share to": [
-                "imgbb",
-                "website",
-                "discord"
-            ],
             "create images": [
                 "122",
                 "122-precip",
@@ -80,7 +9,78 @@
                 "123-precip",
                 "555",
                 "555-precip"
-            ]
+            ],
+            "frequency": 137100000,
+            "minimum elevation": 20,
+            "name": "METEOR-M 2",
+            "priority": 30,
+            "share to": [
+                "imgbb",
+                "website",
+                "discord"
+            ],
+            "type": "LRPT"
+        },
+        "NOAA 15": {
+            "create images": [
+                "a",
+                "b",
+                "HVCT",
+                "MSA",
+                "MSA-precip",
+                "raw"
+            ],
+            "frequency": 137620000,
+            "minimum elevation": 20,
+            "name": "NOAA 15",
+            "priority": 0,
+            "share to": [
+                "imgbb",
+                "website",
+                "discord"
+            ],
+            "type": "APT"
+        },
+        "NOAA 18": {
+            "create images": [
+                "a",
+                "b",
+                "HVCT",
+                "MSA",
+                "MSA-precip",
+                "raw"
+            ],
+            "frequency": 137912500,
+            "minimum elevation": 20,
+            "name": "NOAA 18",
+            "priority": 0,
+            "share to": [
+                "imgbb",
+                "website",
+                "discord"
+            ],
+            "type": "APT"
+        },
+        "NOAA 19": {
+            "create images": [
+                "a",
+                "b",
+                "HVCT",
+                "MSA",
+                "MSA-precip",
+                "raw"
+            ],
+            "frequency": 137100000,
+            "minimum elevation": 20,
+            "name": "NOAA 19",
+            "priority": 0,
+            "share to": [
+                "imgbb",
+                "website",
+                "discord"
+            ],
+            "type": "APT"
         }
-    }
+    },
+    "tle update frequency": 12
 }
