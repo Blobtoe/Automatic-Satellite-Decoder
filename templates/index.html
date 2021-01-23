@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="jsoneditor/dist/jsoneditor.min.css" rel="stylesheet" type="text/css">
+    <script src="jsoneditor/dist/jsoneditor.min.js"></script>
+    <script src="script.js"></script>
     <title>Automatic Satellite Decoder</title>
 </head>
+<meta id="data" data="{{ data }}">
 <body>
+    <div id="jsoneditor" style="width: 400px; height: 400px;"></div>
     <h1>Configuration</h1>
-    <form action="" method="post">
-        {% for value in data["config"] %}
-            <h3>value</h3>
-        {% endfor %}
+    <form action="#" onsubmit="updateConfig();" id="config_form">
     </form>
 </body>
 </html>

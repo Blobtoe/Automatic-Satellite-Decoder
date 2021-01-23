@@ -12,7 +12,7 @@ from PassScheduler import PassScheduler
 from WebServer import WebServer
 
 scheduler = PassScheduler()
-webserver = WebServer()
+webserver = WebServer(scheduler)
 
 if __name__ == "__main__":
     scheduler.start()

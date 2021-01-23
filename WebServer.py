@@ -1,15 +1,21 @@
 import multiprocessing
 from flask import Flask, jsonify, request, render_template
+import json
 
 # local imports
-from start import scheduler
 import utils
 
 app = Flask(__name__)
+scheduler = None
+
+local_path = Path(__file__).parent
 
 
 class WebServer:
-    def __init__(self):
+    def __init__(self, sched):
+        global scheduler
+        scheduler = sched
+
         # create the background process
         self.process = multiprocessing.Process(target=app.run, kwargs=({"port": 5000, "host": "0.0.0.0"}))
 
@@ -34,7 +40,7 @@ class WebServer:
 
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("index.html")
+    return render_template("index.html", data={"config": utils.get_config()})
 
 
 @app.route('/next/pass', methods=['GET'])
@@ -49,3 +55,10 @@ def next_pass():
     except Exception as e:
         utils.log(e)
         return str(e), 400
+
+
+@app.route("/update/config", methods=["POST"])
+def update_config():
+    utils.log(request.form)
+    # with open(local_path / "config.json", "w") as f:
+    # f.write(json.dumps(request.form["data"]))
