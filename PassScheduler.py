@@ -6,6 +6,7 @@ from datetime import datetime
 import json
 import pause
 import predict
+import threading
 
 # local imports
 import utils
@@ -14,10 +15,14 @@ from _Pass import Pass
 
 local_path = Path(__file__).parent
 
+status = ""
+
 
 class PassScheduler:
 
     def __init__(self):
+        global status
+
         # get coordinates from secrets file
         lat = utils.get_secrets()["lat"]
         lon = utils.get_secrets()["lon"]
@@ -28,8 +33,11 @@ class PassScheduler:
         # get the satellites to be scheduled
         self.satellites = utils.get_config()["satellites"]
 
-        # create the background process for processing passes
-        self.process = multiprocessing.Process(target=self._run_process, args=())
+        status = "Started Scheduler"
+
+        # create the background thread for processing passes
+        self.thread = threading.Thread(target=self._run_process)
+        self.stop_event = threading.Event()
 
         # download a new tle
         utils.download_tle()
@@ -38,6 +46,8 @@ class PassScheduler:
 
     def get_future_passes(self, after=time.time(), pass_count=1):
         '''Returns a Pass object of the next scheduled pass.'''
+        global status
+        #status = "Calculating future passes"
 
         if after == None:
             after = time.time()
@@ -47,6 +57,7 @@ class PassScheduler:
         # download a new tle file if needed
         if time.time() - self.tle_updated_time > self.tle_update_frequency * 3600:
             utils.download_tle()
+            self.tle_updated_time = time.time()
 
         utils.log("Calculating transits")
         predictors = {}
@@ -128,24 +139,41 @@ class PassScheduler:
         return [Pass(p) for p in passes]
 
     def start(self):
-        '''Starts processing the passes in a new process.'''
-        self.process.start()
+        '''Starts processing the passes in a new thread.'''
+        self.thread.start()
 
     def _run_process(self):
-        '''target function for parallel process'''
+        '''target function for parallel thread'''
+        global status
 
         next_pass = self.get_future_passes()[0]
 
-        # loop forever (or until the process is terminated)
-        while True:
-            # wait until the pass starts
-            utils.log(f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass...")
-            pause.until(next_pass.aos)
-            # start processing the pass
-            next_pass.process()
-            # get the next pass to process
-            next_pass = self.get_future_passes(after=next_pass.los)[0]
+        t = threading.currentThread()
+
+        # wait until the pass starts
+        status = f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass..."
+        utils.log(status)
+
+        while getattr(t, "do_run", True):
+            status = f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass..."
+            if time.time() >= next_pass.aos:
+                # start processing the pass
+                next_pass.process(self)
+                # get the next pass to thread
+                next_pass = self.get_future_passes(after=next_pass.los)[0]
+            else:
+                time.sleep(5)
+
+        utils.log("Stopped Scheduler")
+
+    def set_status(self, message):
+        global status
+        status = str(message)
+
+    def get_status(self):
+        global status
+        return status
 
     def stop(self):
         '''Stops the scheduler. If a pass is in progress, it will stop after completion of the pass.'''
-        self.process.terminate()
+        self.stop_event.set()

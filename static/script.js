@@ -52,11 +52,11 @@ function getUpcomingPasses() {
             div.appendChild(title);
 
             var start_time = document.createElement("p");
-            start_time.innerHTML = "Start Time: " + new Date(element["aos"] * 1000).toString();
+            start_time.innerHTML = `Start Time: ${new Date(element['aos'] * 1000).toString()} (in about ${deltaTime(new Date(element['aos'] * 1000), new Date())})`
             div.appendChild(start_time);
 
             var end_time = document.createElement("p");
-            end_time.innerHTML = "End Time: " + new Date(element["los"] * 1000).toString();
+            end_time.innerHTML = `End Time: ${new Date(element['los'] * 1000).toString()} (in about ${deltaTime(new Date(element['los'] * 1000), new Date())})`
             div.appendChild(end_time);
 
             var max_elevation = document.createElement("p");
@@ -72,4 +72,13 @@ function getUpcomingPasses() {
     }).fail(function (response) {
         console.log("Failed to get next passes");
     })
+}
+
+function deltaTime(time1, time2) {
+    var milliseconds = time1 - time2;
+    var days = Math.floor(milliseconds / 86400000);
+    var hours = Math.floor((milliseconds - (days * 86400000)) / 3600000);
+    var minutes = Math.floor(((milliseconds - (days * 86400000)) - (hours * 3600000)) / 60000);
+    var seconds = Math.floor((((milliseconds - (days * 86400000)) - (hours * 3600000)) - (minutes * 60000)) / 1000);
+    return `${days} day${days == 1 ? "" : "s"}, ${hours} hour${hours == 1 ? "" : "s"}, ${minutes} minute${minutes == 1 ? "" : "s"} and ${seconds} second${seconds == 1 ? "" : "s"}`;
 }

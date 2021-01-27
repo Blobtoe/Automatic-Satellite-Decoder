@@ -8,7 +8,7 @@ from pathlib import Path
 # local imports
 import process_satellite
 import share
-from utils import log
+import utils
 
 
 class Pass:
@@ -30,11 +30,12 @@ class Pass:
         self.priority = pass_info["priority"]
         self.sun_elev = pass_info["sun_elev"]
 
-    def process(self):
+    def process(self, scheduler):
         local_path = Path(__file__).parent
 
         # send status to console
-        log(f"Started processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
+        scheduler.set_status(f"Started processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
+        utils.log(f"Started processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
 
         # string used for naming the files  (aos in %Y-%m-%d %H.%M.%S format)
         local_time = datetime.fromtimestamp(self.aos).strftime("%Y-%m-%d_%H.%M.%S")
@@ -103,4 +104,5 @@ class Pass:
             json.dump(data, f, indent=4, sort_keys=True)
 
         # send status to console
-        log(f"Finished processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
+        scheduler.set_status(f"Finished processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
+        utils.log(f"Finished processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")

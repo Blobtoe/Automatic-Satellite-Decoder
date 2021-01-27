@@ -34,7 +34,7 @@ def METEOR(_pass, output_filename_base):
         # load bmp
         bmp = Image.open(img)
         # rotate if nessesary
-        if _pass.direction == "southbound":
+        if _pass.direction == "northbound":
             bmp.rotate(180, expand=True)
         # save as jpg
         bmp.save(".".join(img.split(".")[:-1]) + ".jpg")
@@ -96,7 +96,7 @@ def NOAA(_pass, output_filename_base):
 
     # create map overlay
     print("creating map")
-    date = (datetime.utcfromtimestamp(_pass.aos)+timedelta(0, 90)).strftime("%d %b %Y %H:%M:%S")
+    date = (datetime.utcfromtimestamp(_pass.aos) + timedelta(0, 90)).strftime("%d %b %Y %H:%M:%S")
     os.system(f"/usr/local/bin/wxmap -T \"{_pass.satellite_name}\" -H \"{local_path / 'active.tle'}\" -p 0 -l 0 -g 0 -o \"{date}\" \"{output_filename_base}-map.png\"")
 
     # create images

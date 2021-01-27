@@ -69,3 +69,8 @@ def update_config():
 def get_config():
     with open(local_path / "config.json") as f:
         return jsonify(json.load(f))
+
+
+@app.route("/get/status", methods=["GET"])
+def get_status():
+    return scheduler.get_status()
