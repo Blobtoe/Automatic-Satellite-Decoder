@@ -1,0 +1,96 @@
+{
+    "output folder": "/home/pi/drive/weather/images/",
+    "satellites": {
+        "METEOR-M 2": {
+            "create images": [
+                "122",
+                "122-precip",
+                "123",
+                "123-precip",
+                "555",
+                "555-precip"
+            ],
+            "frequency": 137100000,
+            "minimum elevation": 20,
+            "name": "METEOR-M 2",
+            "priority": 30,
+            "share to": [
+                "imgbb",
+                "website",
+                "discord"
+            ],
+            "type": "LRPT"
+        },
+        "NOAA 15": {
+            "create images": [
+                "a",
+                "b",
+                "HVCT",
+                "MSA",
+                "MSA-precip",
+                "raw"
+            ],
+            "frequency": 137620000,
+            "minimum elevation": 20,
+            "name": "NOAA 15",
+            "priority": 0,
+            "share to": [
+                "imgbb",
+                "website",
+                "discord"
+            ],
+            "type": "APT"
+        },
+        "NOAA 18": {
+            "create images": [
+                "a",
+                "b",
+                "HVCT",
+                "MSA",
+                "MSA-precip",
+                "raw"
+            ],
+            "frequency": 137912500,
+            "minimum elevation": 20,
+            "name": "NOAA 18",
+            "priority": 0,
+            "share to": [
+                "imgbb",
+                "website",
+                "discord"
+            ],
+            "type": "APT"
+        },
+        "NOAA 19": {
+            "create images": [
+                "a",
+                "b",
+                "HVCT",
+                "MSA",
+                "MSA-precip",
+                "raw"
+            ],
+            "frequency": 137100000,
+            "minimum elevation": 20,
+            "name": "NOAA 19",
+            "priority": 0,
+            "share to": [
+                "imgbb",
+                "website",
+                "discord"
+            ],
+            "type": "APT"
+        },
+        "ISS (ZARYA)": {
+            "create images": [
+                "sstv"
+            ],
+            "frequency": 145800000,
+            "minimum elevation": 20,
+            "name": "ISS (ZARYA)",
+            "priority": 90,
+            "type": "SSTV"
+        }
+    },
+    "tle update frequency": 6
+}

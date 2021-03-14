@@ -18,7 +18,7 @@ class WebServer:
         scheduler = sched
 
         # create the background process
-        self.process = multiprocessing.Process(target=app.run, kwargs=({"port": 5000, "host": "0.0.0.0"}))
+        self.process = multiprocessing.Process(target=app.run, kwargs=({"port": 5000, "host": "0.0.0.0", "ssl_context": "adhoc"}))
 
         # create flask app
         self.app = Flask(__name__)
@@ -32,7 +32,7 @@ class WebServer:
         # stop the process
         self.process.terminate()
         # re-create the background process
-        self.process = multiprocessing.Process(target=app.run, kwargs=({"port": 5000, "host": "0.0.0.0"}))
+        self.process = multiprocessing.Process(target=app.run, kwargs=({"port": 5000, "host": "0.0.0.0", "ssl_context": "adhoc"}))
 
 ###############
 ###ENDPOINTS###

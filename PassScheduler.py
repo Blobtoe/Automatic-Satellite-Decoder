@@ -7,6 +7,7 @@ import json
 import pause
 import predict
 import threading
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # local imports
 import utils
@@ -36,13 +37,15 @@ class PassScheduler:
         status = "Started Scheduler"
 
         # create the background thread for processing passes
-        self.thread = threading.Thread(target=self._run_process)
-        self.stop_event = threading.Event()
+        #self.thread = threading.Thread(target=self._run_process)
+        #self.stop_event = threading.Event()
 
         # download a new tle
         utils.download_tle()
         self.tle_updated_time = time.time()
         self.tle_update_frequency = utils.get_config()["tle update frequency"]
+
+        self.scheduler = BackgroundScheduler()
 
     def get_future_passes(self, after=time.time(), pass_count=1):
         '''Returns a Pass object of the next scheduled pass.'''
@@ -139,32 +142,56 @@ class PassScheduler:
         return [Pass(p) for p in passes]
 
     def start(self):
-        '''Starts processing the passes in a new thread.'''
-        self.thread.start()
+        #start the scheduler
+        self.scheduler.start()
 
-    def _run_process(self):
-        '''target function for parallel thread'''
-        global status
-
+        #get the next pass
         next_pass = self.get_future_passes()[0]
 
-        t = threading.currentThread()
+        #add it to the scheduler
+        self.scheduler.add_job(self.process_pass, run_date=datetime.fromtimestamp(next_pass.aos), args=[next_pass])
+        utils.log(f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass...")
 
-        # wait until the pass starts
-        status = f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass..."
-        utils.log(status)
+    def process_pass(self, p):
+        #process the pass
+        p.process(self)
+        
+        #get the next pass
+        next_pass = self.get_future_passes()[0]
 
-        while getattr(t, "do_run", True):
-            status = f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass..."
-            if time.time() >= next_pass.aos:
-                # start processing the pass
-                next_pass.process(self)
-                # get the next pass to thread
-                next_pass = self.get_future_passes(after=next_pass.los)[0]
-            else:
-                time.sleep(5)
+        #add it to the scheduler
+        self.scheduler.add_job(self.process_pass, run_date=datetime.fromtimestamp(next_pass.aos), args=[next_pass])
+        utils.log(f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass...")
 
-        utils.log("Stopped Scheduler")
+
+    # def start(self):
+    #     '''Starts processing the passes in a new thread.'''
+    #     self.thread.start()
+
+    # def _run_process(self):
+    #     '''target function for parallel thread'''
+    #     global status
+
+    #     next_pass = self.get_future_passes()[0]
+
+    #     t = threading.currentThread()
+
+    #     # wait until the pass starts
+    #     status = f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass..."
+    #     utils.log(status)
+
+    #     while getattr(t, "do_run", True):
+    #         status = f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass..."
+    #         if time.time() >= next_pass.aos:
+    #             # start processing the pass
+    #             next_pass.process(self)
+    #             # get the next pass to thread
+    #             next_pass = self.get_future_passes(after=next_pass.los)[0]
+    #         else:
+    #             time.sleep(5)
+
+    #     utils.log("Stopped Scheduler")
+        
 
     def set_status(self, message):
         global status
