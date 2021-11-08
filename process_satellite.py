@@ -11,31 +11,59 @@ from pathlib import Path
 # local imports
 from utils import log
 
+local_path = Path(__file__).parent
 
-def METEOR(_pass, output_filename_base):
+
+def METEOR(_pass, output_filename_base, scheduler):
     '''records, demodulates, and decodes METEOR-M 2 given the Pass object for the pass and the output file name, then returns the image's file path'''
-    local_path = Path(__file__).parent
+    global local_path
+
+    #set the status
+    scheduler.status = {
+        "status": "recording",
+        "pass": _pass.info
+    }
 
     # record pass baseband with rtl_fm
     print("recording pass...")
     os.system(f"timeout {_pass.duration} /usr/local/bin/rtl_fm -M raw -s 110k -f {_pass.frequency} -E dc -g 49.6 -p 0 - | sox -t raw -r 110k -c 2 -b 16 -e s - -t wav {output_filename_base}.iq.wav rate 192k")
 
+    #os.system(f"screen -dmS meteor; screen -S meteor -X stuff '/usr/bin/meteor_demod -B -r 72000 -m qpsk -o {output_filename_base}.qpsk -s 110000 /tmp/meteor_iq \r'")
+    #os.system(f"timeout {_pass.duration} /usr/local/bin/rtl_fm -M raw -s 110k -f {_pass.frequency} -E dc -g 49.6 -p 0 /tmp/meteor_iq; screen -X -S meteor quit")
+
+    #set the status
+    scheduler.status = {
+        "status": "demodulating",
+        "pass": _pass.info
+    }
+
     # demodulate the signal
     print("demodulating meteor signal...")
     os.system(f"/usr/bin/meteor_demod -B -r 72000 -m qpsk -o {output_filename_base}.qpsk {output_filename_base}.iq.wav")
 
+    if not os.path.exists(f"{output_filename_base}.qpsk"):
+        log("Failed demodulation")
+        return [], None
+
+    #set the status
+    scheduler.status = {
+        "status": "decoding",
+        "pass": _pass.info
+    }
+
     # decode the signal into an image
     print("decoding image...")
+    #rgb122
     os.system(f"/usr/local/bin/medet_arm {output_filename_base}.qpsk {output_filename_base}.rgb122 -q -cd -r 65 -g 65 -b 64")
+    #rgb555
     os.system(f"/usr/local/bin/medet_arm {output_filename_base}.rgb122.dec {output_filename_base}.ir -d -q -r 68 -g 68 -b 68")
+    #rgb 123
+    os.system(f"/usr/local/bin/medet_arm {output_filename_base}.rgb122.dec {output_filename_base}.rgb123 -d -q -r 66 -g 65 -b 64")
 
-    # convert bmp to jpg and rotate if nessesary
-    for img in [f"{output_filename_base}.rgb122.bmp", f"{output_filename_base}.ir.bmp"]:
+    # convert bmp to jpg
+    for img in [f"{output_filename_base}.rgb122.bmp", f"{output_filename_base}.ir.bmp", f"{output_filename_base}.rgb123.bmp"]:
         # load bmp
         bmp = Image.open(img)
-        # rotate if nessesary
-        if _pass.direction == "northbound":
-            bmp.rotate(180, expand=True)
         # save as jpg
         bmp.save(".".join(img.split(".")[:-1]) + ".jpg")
 
@@ -53,16 +81,29 @@ def METEOR(_pass, output_filename_base):
     # rectify images
     os.system(f"/usr/local/bin/rectify-jpg {output_filename_base}.rgb122.jpg")
     os.system(f"/usr/local/bin/rectify-jpg {output_filename_base}.ir.jpg")
+    os.system(f"/usr/local/bin/rectify-jpg {output_filename_base}.rgb123.jpg")
 
     # rename file
     os.rename(f"{output_filename_base}.rgb122-rectified.jpg", f"{output_filename_base}.rgb122.jpg")
     os.rename(f"{output_filename_base}.ir-rectified.jpg", f"{output_filename_base}.ir.jpg")
+    os.rename(f"{output_filename_base}.rgb123-rectified.jpg", f"{output_filename_base}.rgb123.jpg")
 
-    main_tag = "rgb122"
-    if _pass.sun_elev <= 10:
-        main_tag = "ir"
+    # rotate images if necessary
+    for img in [f"{output_filename_base}.rgb122.jpg", f"{output_filename_base}.ir.jpg", f"{output_filename_base}.rgb123.jpg"]:
+        if _pass.direction == "northbound":
+            # load image
+            jpg = Image.open(img)
+            # rotate if necessary
+            jpg.rotate(180, expand=True)
+            # save as image
+            jpg.save(img)
 
-    # add precipitaion overlay to main image
+    main_tag = "rgb123"
+    #if _pass.sun_elev <= -10:
+    #    main_tag = "ir"
+
+    # add precipitaion overlay to main image (should only be activated when ir is enabled)
+    '''
     THRESHOLD = 25
     ir = cv2.imread(f"{output_filename_base}.ir.jpg", cv2.IMREAD_GRAYSCALE)
     image = cv2.imread(f"{output_filename_base}.{main_tag}.jpg")
@@ -71,25 +112,40 @@ def METEOR(_pass, output_filename_base):
     _, mask = cv2.threshold(ir, THRESHOLD, 255, cv2.THRESH_BINARY_INV)
     image[np.where(mask == 255)] = [clut[0][int(value)] for value in ir[np.where(mask == 255)] * [255] / [THRESHOLD]]
     cv2.imwrite(f"{output_filename_base}.{main_tag}-precip.jpg", image)
+    '''
 
     # return the image's file path
     return [
         f"{output_filename_base}.rgb122.jpg",
         f"{output_filename_base}.ir.jpg",
-        f"{output_filename_base}.{main_tag}-precip.jpg"
-    ], f"{main_tag}-precip"
+        f"{output_filename_base}.rgb123.jpg"
+        #f"{output_filename_base}.{main_tag}-precip.jpg"
+    ], f"{main_tag}"
+    
 
 
-def NOAA(_pass, output_filename_base):
+def NOAA(_pass, output_filename_base, scheduler):
     '''records and decodes NOAA APT satellites given the Pass object for the pass and the output file name, then returns the images' file paths'''
-    local_path = Path(__file__).parent
+    global local_path
+
+    #set the status
+    scheduler.status = {
+        "status": "recording",
+        "pass": _pass.info
+    }
 
     # record the pass with rtl_fm
     print(f"writing to file: {output_filename_base}.wav")
     os.system(f"timeout {_pass.duration} /usr/local/bin/rtl_fm -d 0 -f {_pass.frequency} -g 49.6 -s 37000 -E deemp -F 9 - | sox -traw -esigned -c1 -b16 -r37000 - {output_filename_base}.wav rate 11025")
 
+    #set the status
+    scheduler.status = {
+        "status": "decoding",
+        "pass": _pass.info
+    }
+
     # check if the wav file was properly created
-    if os.path.isfile(f"{output_filename_base}.wav") == True and os.stat(f"{output_filename_base}.wav").st_size > 10:
+    if os.path.isfile(f"{output_filename_base}.wav") == True and os.stat(f"{output_filename_base}.wav").st_size > 50:
         pass
     else:
         raise Exception("wav file was not created correctly. Aborting")
@@ -123,3 +179,10 @@ def NOAA(_pass, output_filename_base):
         f"{output_filename_base}.MSA.jpg",
         f"{output_filename_base}.MSA-precip.jpg",
         f"{output_filename_base}.raw.jpg"], main_tag
+
+
+def SSTV(_pass, output_filename_base):
+    global local_path
+
+    print(f"writing to file: {output_filename_base}.iq.wav")
+    os.system(f"timeout {_pass.duration} /usr/local/bin/rtl_fm -M raw -s 100k -f {_pass.frequency} -g 49.6  -s 37000 -E dc -p 0 - | sox -t raw -e s -c 2 -b 16 -r 100k - -t wav {output_filename_base}.iq.wav")

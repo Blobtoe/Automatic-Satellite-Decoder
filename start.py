@@ -14,7 +14,7 @@ from WebServer import WebServer
 scheduler = PassScheduler()
 webserver = WebServer(scheduler)
 
-if __name__ == "__main__":
-    scheduler.start()
-    webserver.start()
-    input()
+scheduler.start()
+webserver.start()
+
+input()

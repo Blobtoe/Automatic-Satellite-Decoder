@@ -9,7 +9,9 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 import requests
 from datetime import datetime
 from pathlib import Path
+import traceback
 
+import utils
 
 #######################################
 # sends a message to a discord webhook given the json file for the pass and the webhook url
@@ -79,9 +81,8 @@ def imgur(path, image):
             return link
         except Exception as e:
             count += 1
-            print(
-                "failed to upload image... trying again  {}/10".format(count))
-            print(e)
+            print("failed to upload image... trying again  {}/10".format(count))
+            print(traceback.format_exc())
             time.sleep(2)
 
             if count >= 10:
@@ -89,7 +90,7 @@ def imgur(path, image):
 
 
 #######################################
-# uploads an image to imgbb.com given the image's file pathm, then return a link
+# uploads an image to imgbb.com given the image's file path, then return a link
 def imgbb(image):
     local_path = Path(__file__).parent
     with open(image, "rb") as file:
@@ -111,3 +112,16 @@ def imgbb(image):
                 print(e)
                 time.sleep(2)
         return None
+
+#######################################
+# sends the pass info to the home assistant webhook
+def home_assistant(pass_info, next_pass_info):
+    utils.log("Sharing to home assistant")
+    requests.post("http://192.168.1.101:8123/api/webhook/latest_satellite_pass", json=pass_info)
+    requests.post("http://192.168.1.101:8123/api/webhook/next_satellite_pass", json=next_pass_info)
+    utils.log("done")
+
+#######################################
+# sends the pass info to the home server
+def home_server(filename, pass_info):
+    requests.post("http://192.168.1.101:5000/save_pass", json={"filename": filename, "data": pass_info})

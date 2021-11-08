@@ -9,7 +9,7 @@ function updateConfig() {
     var data = jsoneditor.get();
     $.ajax({
         type: "POST",
-        url: "http://satellitestation.ddns.net:5000/update/config",
+        url: "/update/config",
         data: JSON.stringify(data),
         contentType: "application/json;charset=UTF-8"
     }).done(function (response) {
@@ -22,7 +22,7 @@ function updateConfig() {
 function getConfig() {
     $.ajax({
         type: "GET",
-        url: "http://satellitestation.ddns.net:5000/get/config",
+        url: "/get/config",
         contentType: "application/json;charset=UTF-8",
         dataType: "json"
     }).done(function (response) {
@@ -36,7 +36,7 @@ function getUpcomingPasses() {
     var pass_count = document.getElementById("pass_count").value;
     $.ajax({
         type: "GET",
-        url: `http://satellitestation.ddns.net:5000/get/next/pass?pass_count=${pass_count}`,
+        url: `/get/next/pass?pass_count=${pass_count}`,
         contentType: "application/json;charset=UTF-8",
         dataType: "json"
     }).done(function (response) {

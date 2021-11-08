@@ -8,6 +8,10 @@ import pause
 import predict
 import threading
 from apscheduler.schedulers.background import BackgroundScheduler
+import traceback
+from flask import jsonify
+from glob import glob
+import os
 
 # local imports
 import utils
@@ -15,8 +19,6 @@ from _Pass import Pass
 
 
 local_path = Path(__file__).parent
-
-status = ""
 
 
 class PassScheduler:
@@ -34,7 +36,10 @@ class PassScheduler:
         # get the satellites to be scheduled
         self.satellites = utils.get_config()["satellites"]
 
-        status = "Started Scheduler"
+        self.status = {
+            "status": None,
+            "pass": None
+        }
 
         # create the background thread for processing passes
         #self.thread = threading.Thread(target=self._run_process)
@@ -46,9 +51,49 @@ class PassScheduler:
         self.tle_update_frequency = utils.get_config()["tle update frequency"]
 
         self.scheduler = BackgroundScheduler()
+        self.next_pass = None
+
+    def get_passes(self, pass_count=1, after=None, before=None, satellite_names=None, min_elevation=None, max_elevation=None, min_sun_elevation=None, max_sun_elevation=None):
+        '''Returns a list of Pass objects of past pass(es)'''
+        try:
+            passes = []
+            count = 0
+
+            # go over every json file in the output folder
+            utils.log("getting passes")
+            pass_files = sorted(glob(str(Path(utils.get_config()["output folder"]) / "**/**/**.json")), key=os.path.getmtime)[::-1]
+            utils.log("starting loop")
+            for file in pass_files:
+                # return the response if we have the requested number of passes
+                if count >= pass_count:
+                    break
+
+                # read the data from the json file
+                with open(file) as f:
+                    data = json.load(f)
+
+                # check if the pass matches every argument
+                #passed = True
+
+                if (after == None or data["aos"] > after) and \
+                   (before == None or data["aos"] < before) and \
+                   (satellite_names == None or data["satellite"] in satellite_names) and \
+                   (min_elevation == None or data["max_elevation"] > min_elevation) and \
+                   (max_elevation == None or data["max_elevation"] < max_elevation) and \
+                   (min_sun_elevation == None or data["sun_elev"] > min_sun_elevation) and \
+                   (max_sun_elevation == None or data["sun_elev"] < max_elevation):
+                    count += 1
+                    passes.append(Pass(data))
+
+            return passes
+
+        # if we run into an error, print the error and return code 400
+        except Exception as e:
+            utils.log(traceback.format_exc())
+            return traceback.format_exc(), 400
 
     def get_future_passes(self, after=time.time(), pass_count=1):
-        '''Returns a Pass object of the next scheduled pass.'''
+        '''Returns a list of Pass objects of the next scheduled pass(es).'''
         global status
         #status = "Calculating future passes"
 
@@ -146,51 +191,37 @@ class PassScheduler:
         self.scheduler.start()
 
         #get the next pass
-        next_pass = self.get_future_passes()[0]
+        self.next_pass = self.get_future_passes()[0]
 
         #add it to the scheduler
-        self.scheduler.add_job(self.process_pass, run_date=datetime.fromtimestamp(next_pass.aos), args=[next_pass])
-        utils.log(f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass...")
+        self.scheduler.add_job(self.process_pass, run_date=datetime.fromtimestamp(self.next_pass.aos), args=[self.next_pass])
+
+        #set the status
+        self.status = {
+            "status": "waiting",
+            "pass": self.next_pass.info
+        }
+        utils.log(f"Waiting until {datetime.fromtimestamp(self.next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {self.next_pass.max_elevation}° {self.next_pass.satellite_name} pass...")
 
     def process_pass(self, p):
-        #process the pass
-        p.process(self)
-        
         #get the next pass
-        next_pass = self.get_future_passes()[0]
-
+        self.next_pass = self.get_future_passes(after=self.next_pass.los)[0]
         #add it to the scheduler
-        self.scheduler.add_job(self.process_pass, run_date=datetime.fromtimestamp(next_pass.aos), args=[next_pass])
-        utils.log(f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass...")
-
-
-    # def start(self):
-    #     '''Starts processing the passes in a new thread.'''
-    #     self.thread.start()
-
-    # def _run_process(self):
-    #     '''target function for parallel thread'''
-    #     global status
-
-    #     next_pass = self.get_future_passes()[0]
-
-    #     t = threading.currentThread()
-
-    #     # wait until the pass starts
-    #     status = f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass..."
-    #     utils.log(status)
-
-    #     while getattr(t, "do_run", True):
-    #         status = f"Waiting until {datetime.fromtimestamp(next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {next_pass.max_elevation}° {next_pass.satellite_name} pass..."
-    #         if time.time() >= next_pass.aos:
-    #             # start processing the pass
-    #             next_pass.process(self)
-    #             # get the next pass to thread
-    #             next_pass = self.get_future_passes(after=next_pass.los)[0]
-    #         else:
-    #             time.sleep(5)
-
-    #     utils.log("Stopped Scheduler")
+        self.scheduler.add_job(self.process_pass, run_date=datetime.fromtimestamp(self.next_pass.aos), args=[self.next_pass])
+        
+        #process the pass
+        try:
+            p.process(self)
+        except Exception as e:
+            utils.log(f"Failed to process pass:")
+            traceback.print_exc()
+        
+        #set the status
+        self.status = {
+            "status": "waiting",
+            "pass": self.next_pass.info
+        }
+        utils.log(f"Waiting until {datetime.fromtimestamp(self.next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {self.next_pass.max_elevation}° {self.next_pass.satellite_name} pass...")
         
 
     def set_status(self, message):
@@ -198,9 +229,8 @@ class PassScheduler:
         status = str(message)
 
     def get_status(self):
-        global status
-        return status
+        return self.status
 
     def stop(self):
         '''Stops the scheduler. If a pass is in progress, it will stop after completion of the pass.'''
-        self.stop_event.set()
+        #self.stop_event.set()

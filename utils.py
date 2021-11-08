@@ -95,6 +95,8 @@ def parse_pass_info(p):
         "status": "INCOMING",
         # type of satellite
         "type": satellite_config["type"],
+        # azimuth at the tca
+        "azimuth_tca": round(p.peak()["azimuth"], 1),
         # azimuth at the aos
         "azimuth_aos": round(p.at(p.start)["azimuth"], 1),
         # azimuth at the los

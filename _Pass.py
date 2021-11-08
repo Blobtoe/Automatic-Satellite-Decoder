@@ -33,8 +33,6 @@ class Pass:
     def process(self, scheduler):
         local_path = Path(__file__).parent
 
-        # send status to console
-        scheduler.set_status(f"Started processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
         utils.log(f"Started processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
 
         # string used for naming the files  (aos in %Y-%m-%d %H.%M.%S format)
@@ -56,13 +54,16 @@ class Pass:
 
         # process APT
         if self.type == "APT":
-            images, main_tag = process_satellite.NOAA(self, output_filename_base)
+            images, main_tag = process_satellite.NOAA(self, output_filename_base, scheduler)
         # process LRPT
         elif self.type == "LRPT":
-            images, main_tag = process_satellite.METEOR(self, output_filename_base)
+            images, main_tag = process_satellite.METEOR(self, output_filename_base, scheduler)
+        elif self.type == "SSTV":
+            process_satellite.SSTV(self, output_filename_base)
 
         # upload each image to the internet
         links = {}
+        main_image = None
         for image in images:
             # add metadata to image
             exif_dict = piexif.load(image)
@@ -88,6 +89,12 @@ class Pass:
         # send discord webhook(s)
         share.discord_webhook(self.info)
 
+        # send to home assistant webhook
+        share.home_assistant(self.info, scheduler.get_future_passes()[0].info)
+
+        #send to home server
+        share.home_server(f"{output_filename_base}.json".split("/")[-1], self.info)
+
         # update the status in daily_passes.json
         '''
         with open("/home/pi/website/weather/scripts/scheduled_passes.json", "r+") as f:
@@ -104,5 +111,5 @@ class Pass:
             json.dump(data, f, indent=4, sort_keys=True)
 
         # send status to console
-        scheduler.set_status(f"Finished processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
+        #scheduler.set_status(f"Finished processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
         utils.log(f"Finished processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
