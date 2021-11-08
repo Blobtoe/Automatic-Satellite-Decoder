@@ -53,9 +53,9 @@ def METEOR(_pass, output_filename_base, scheduler):
 
     try:
         output_directory = '/'.join(output_filename_base.split('/')[:-1])
-        os.system(f"/usr/bin/satdump meteor_m2_lrpt soft {output_filename_base}.qpsk products {output_directory} -samplerate 192000 -baseband_format i16")
-        os.system(f"/usr/bin/satdump project 3000 3000 {output_filename_base}.rgb.projection.png stereo CN89ks 1 {output_directory}/MSU-MR/MSU-MR-RGB-221-EQU.png {output_directory}/MSU-MR/MSU-MR-RGB-221-EQU.georef")
-        os.system(f"/usr/bin/satdump project 3000 3000 {output_filename_base}.infrared.projection.png stereo CN89ks 1 {output_directory}/MSU-MR/MSU-MR-5.png {output_directory}/MSU-MR/MSU-MR-5.georef")
+        os.system(f"( cd /home/pi/satdump/build && ./satdump meteor_m2_lrpt soft {output_filename_base}.qpsk products {output_directory} -samplerate 192000 -baseband_format i16 )")
+        os.system(f"( cd /home/pi/satdump/build && ./satdump project 3000 3000 {output_filename_base}.rgb.projection.png stereo CN89ks 1 {output_directory}/MSU-MR/MSU-MR-RGB-221-EQU.png {output_directory}/MSU-MR/MSU-MR-RGB-221-EQU.georef )")
+        os.system(f"( cd /home/pi/satdump/build && ./satdump project 3000 3000 {output_filename_base}.infrared.projection.png stereo CN89ks 1 {output_directory}/MSU-MR/MSU-MR-5.png {output_directory}/MSU-MR/MSU-MR-5.georef )")
     except Exception as e:
         print(e)
 
