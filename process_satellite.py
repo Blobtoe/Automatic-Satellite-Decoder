@@ -51,14 +51,21 @@ def METEOR(_pass, output_filename_base, scheduler):
         "pass": _pass.info
     }
 
+    output_directory = '/'.join(output_filename_base.split('/')[:-1])
     try:
-        output_directory = '/'.join(output_filename_base.split('/')[:-1])
         os.system(f"( cd /home/pi/satdump/build && ./satdump meteor_m2_lrpt soft {output_filename_base}.qpsk products {output_directory} -samplerate 192000 -baseband_format i16 )")
-        os.system(f"( cd /home/pi/satdump/build && ./satdump project 3000 3000 {output_filename_base}.rgb.projection.png stereo CN89ks 1 {output_directory}/MSU-MR/MSU-MR-RGB-221-EQU.png {output_directory}/MSU-MR/MSU-MR-RGB-221-EQU.georef )")
-        os.system(f"( cd /home/pi/satdump/build && ./satdump project 3000 3000 {output_filename_base}.infrared.projection.png stereo CN89ks 1 {output_directory}/MSU-MR/MSU-MR-5.png {output_directory}/MSU-MR/MSU-MR-5.georef )")
+        
+        for file in os.listdir(f"{output_directory}/MSU-MR/"):
+            if file.endswith(["EQU.png", "5.png"]):
+                os.system(f"( cd /home/pi/satdump/build && ./satdump project 3000 3000 {output_filename_base}.{'-'.join(file.split('-')[2:])[:-4]}.projection.png stereo CN89ks 0.9 {output_directory}/MSU-MR/{file} {output_directory}/MSU-MR/{file[:-4]}.georef )")
+            
+            if file.endswith("CORRECTED.png"):
+                os.rename(f"{output_directory}/MSU-MR/{file}", f"{output_filename_base}.{'-'.join(file.split('-')[2:])}")
     except Exception as e:
         print(e)
 
+    # old code using medet_arm
+    '''
     # decode the signal into an image
     print("decoding image...")
     #rgb122
@@ -75,16 +82,16 @@ def METEOR(_pass, output_filename_base, scheduler):
         # save as jpg
         bmp.save(".".join(img.split(".")[:-1]) + ".jpg")
 
-    '''
+    
     # get rid of the blue tint in the image (thanks to PotatoSalad for the code)
-    img = Image.open(outfile + ".jpg")
-    pix = img.load()
-    for y in range(img.size[1]):
-        for x in range(img.size[0]):
-            if pix[x, y][2] > 140 and pix[x, y][0] < pix[x, y][2]:
-                pix[x, y] = (pix[x, y][2], pix[x, y][1], pix[x, y][2])
-    img.save(outfile + ".equalized.jpg")
-    '''
+    #img = Image.open(outfile + ".jpg")
+    #pix = img.load()
+    #for y in range(img.size[1]):
+    #    for x in range(img.size[0]):
+    #        if pix[x, y][2] > 140 and pix[x, y][0] < pix[x, y][2]:
+    #            pix[x, y] = (pix[x, y][2], pix[x, y][1], pix[x, y][2])
+    #img.save(outfile + ".equalized.jpg")
+    
 
     # rectify images
     os.system(f"/usr/local/bin/rectify-jpg {output_filename_base}.rgb122.jpg")
@@ -105,8 +112,9 @@ def METEOR(_pass, output_filename_base, scheduler):
             jpg.rotate(180, expand=True)
             # save as image
             jpg.save(img)
+    '''
 
-    main_tag = "rgb123"
+    main_tag = "RGB-221-EQU.projection"
     #if _pass.sun_elev <= -10:
     #    main_tag = "ir"
 
@@ -122,13 +130,12 @@ def METEOR(_pass, output_filename_base, scheduler):
     cv2.imwrite(f"{output_filename_base}.{main_tag}-precip.jpg", image)
     '''
 
+    final_images = []
+    for file in os.listdir(output_directory):
+        if file.endswith(["projection.png" , "CORRECTED.png"]):
+            final_images.append(f"{output_directory}/{file}")
     # return the image's file path
-    return [
-        f"{output_filename_base}.rgb122.jpg",
-        f"{output_filename_base}.ir.jpg",
-        f"{output_filename_base}.rgb123.jpg"
-        #f"{output_filename_base}.{main_tag}-precip.jpg"
-    ], f"{main_tag}"
+    return final_images, main_tag
     
 
 
