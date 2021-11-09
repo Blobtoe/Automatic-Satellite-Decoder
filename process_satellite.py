@@ -133,7 +133,8 @@ def METEOR(_pass, output_filename_base, scheduler):
     final_images = []
     for file in os.listdir(output_directory):
         if file.endswith(("projection.png" , "CORRECTED.png")):
-            final_images.append(f"{output_directory}/{file}")
+            Image.open(f"{output_directory}/{file}").save(f"{output_directory}/{file[:-3]+'jpg'}")
+            final_images.append(f"{output_directory}/{file[:-3]+'jpg'}")
     # return the image's file path
     return final_images, main_tag
     
