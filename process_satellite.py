@@ -56,7 +56,7 @@ def METEOR(_pass, output_filename_base, scheduler):
         os.system(f"( cd /home/pi/satdump/build && ./satdump meteor_m2_lrpt soft {output_filename_base}.qpsk products {output_directory} -samplerate 192000 -baseband_format i16 )")
         
         for file in os.listdir(f"{output_directory}/MSU-MR/"):
-            if file.endswith(["EQU.png", "5.png"]):
+            if file.endswith(("EQU.png", "5.png")):
                 os.system(f"( cd /home/pi/satdump/build && ./satdump project 3000 3000 {output_filename_base}.{'-'.join(file.split('-')[2:])[:-4]}.projection.png stereo CN89ks 0.9 {output_directory}/MSU-MR/{file} {output_directory}/MSU-MR/{file[:-4]}.georef )")
             
             if file.endswith("CORRECTED.png"):
@@ -132,7 +132,7 @@ def METEOR(_pass, output_filename_base, scheduler):
 
     final_images = []
     for file in os.listdir(output_directory):
-        if file.endswith(["projection.png" , "CORRECTED.png"]):
+        if file.endswith(("projection.png" , "CORRECTED.png")):
             final_images.append(f"{output_directory}/{file}")
     # return the image's file path
     return final_images, main_tag
