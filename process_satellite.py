@@ -57,7 +57,7 @@ def METEOR(_pass, output_filename_base, scheduler):
         
         for file in os.listdir(f"{output_directory}/MSU-MR/"):
             if file.endswith(("EQU.png", "5.png")):
-                os.system(f"( cd /home/pi/satdump/build && ./satdump project 3000 3000 {output_filename_base}.{'-'.join(file.split('-')[2:])[:-4]}.projection.png stereo CN89ks 0.9 {output_directory}/MSU-MR/{file} {output_directory}/MSU-MR/{file[:-4]}.georef )")
+                os.system(f"( cd /home/pi/satdump/build && ./satdump project 3000 3000 {output_filename_base}.{'-'.join(file.split('-')[2:])[:-4]}-proj.png stereo CN89ks 0.9 {output_directory}/MSU-MR/{file} {output_directory}/MSU-MR/{file[:-4]}.georef )")
             
             if file.endswith("CORRECTED.png"):
                 os.rename(f"{output_directory}/MSU-MR/{file}", f"{output_filename_base}.{'-'.join(file.split('-')[2:])}")
