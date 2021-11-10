@@ -114,9 +114,9 @@ def METEOR(_pass, output_filename_base, scheduler):
             jpg.save(img)
     '''
 
-    main_tag = "RGB-221-EQU.projection"
-    #if _pass.sun_elev <= -10:
-    #    main_tag = "ir"
+    main_tag = "RGB-221-EQU-proj"
+    if _pass.sun_elev <= -10:
+        main_tag = "5-proj"
 
     # add precipitaion overlay to main image (should only be activated when ir is enabled)
     '''
@@ -132,7 +132,7 @@ def METEOR(_pass, output_filename_base, scheduler):
 
     final_images = []
     for file in os.listdir(output_directory):
-        if file.endswith(("projection.png" , "CORRECTED.png")):
+        if file.endswith(("proj.png" , "CORRECTED.png")):
             Image.open(f"{output_directory}/{file}").save(f"{output_directory}/{file[:-3]+'jpg'}")
             final_images.append(f"{output_directory}/{file[:-3]+'jpg'}")
     # return the image's file path
