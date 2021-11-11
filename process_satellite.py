@@ -114,10 +114,6 @@ def METEOR(_pass, output_filename_base, scheduler):
             jpg.save(img)
     '''
 
-    main_tag = "RGB-221-EQU-proj"
-    if _pass.sun_elev <= -10:
-        main_tag = "5-proj"
-
     # add precipitaion overlay to main image (should only be activated when ir is enabled)
     '''
     THRESHOLD = 25
@@ -131,10 +127,17 @@ def METEOR(_pass, output_filename_base, scheduler):
     '''
 
     final_images = []
+    main_tag = "RGB-221-EQU-proj"
+    # convert png to jpg
     for file in os.listdir(output_directory):
         if file.endswith(("proj.png" , "CORRECTED.png")):
+            # set IR as main tag if channel is available and sun is below threshold
+            if file.endswith("5-proj.png") and _pass.sun_elev <= -10:
+                main_tag = "5-proj"
             Image.open(f"{output_directory}/{file}").save(f"{output_directory}/{file[:-3]+'jpg'}")
+            os.remove(f"{output_directory}/{file}")
             final_images.append(f"{output_directory}/{file[:-3]+'jpg'}")
+
     # return the image's file path
     return final_images, main_tag
     
