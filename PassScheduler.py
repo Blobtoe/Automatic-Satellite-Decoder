@@ -1,12 +1,8 @@
 import time
-import sched
-import multiprocessing
 from pathlib import Path
 from datetime import datetime
 import json
-import pause
 import predict
-import threading
 from apscheduler.schedulers.background import BackgroundScheduler
 import traceback
 from flask import jsonify

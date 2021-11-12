@@ -1,10 +1,8 @@
 # Made by Felix (Blobtoe)
 
 import os
-import json
 from PIL import Image
 from datetime import datetime, timedelta
-import cv2
 import numpy as np
 from pathlib import Path
 
