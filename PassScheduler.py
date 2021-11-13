@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 import json
 import predict
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 import traceback
 from flask import jsonify
 from glob import glob
@@ -33,7 +33,7 @@ class PassScheduler:
         self.satellites = utils.get_config()["satellites"]
 
         self.status = {
-            "status": None,
+            "status": "Initialized",
             "pass": None
         }
 
@@ -46,7 +46,7 @@ class PassScheduler:
         self.tle_updated_time = time.time()
         self.tle_update_frequency = utils.get_config()["tle update frequency"]
 
-        self.scheduler = BackgroundScheduler()
+        self.scheduler = BlockingScheduler()
         self.next_pass = None
 
     def get_passes(self, pass_count=1, after=None, before=None, satellite_names=None, min_elevation=None, max_elevation=None, min_sun_elevation=None, max_sun_elevation=None):
@@ -183,9 +183,6 @@ class PassScheduler:
         return [Pass(p) for p in passes]
 
     def start(self):
-        #start the scheduler
-        self.scheduler.start()
-
         #get the next pass
         self.next_pass = self.get_future_passes()[0]
 
@@ -195,9 +192,12 @@ class PassScheduler:
         #set the status
         self.status = {
             "status": "waiting",
-            "pass": self.next_pass.info
+            "pass": self.next_pass
         }
         utils.log(f"Waiting until {datetime.fromtimestamp(self.next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {self.next_pass.max_elevation}° {self.next_pass.satellite_name} pass...")
+
+        #start the scheduler
+        self.scheduler.start()
 
     def process_pass(self, p):
         #get the next pass
@@ -215,14 +215,13 @@ class PassScheduler:
         #set the status
         self.status = {
             "status": "waiting",
-            "pass": self.next_pass.info
+            "pass": self.next_pass
         }
         utils.log(f"Waiting until {datetime.fromtimestamp(self.next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {self.next_pass.max_elevation}° {self.next_pass.satellite_name} pass...")
         
 
-    def set_status(self, message):
-        global status
-        status = str(message)
+    def set_status(self, new_status):
+        self.status = new_status
 
     def get_status(self):
         return self.status

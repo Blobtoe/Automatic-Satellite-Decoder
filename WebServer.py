@@ -2,7 +2,6 @@ import multiprocessing
 from flask import Flask, jsonify, request, render_template
 import json
 from pathlib import Path
-import traceback
 from flask_cors import CORS
 import requests
 
