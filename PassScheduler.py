@@ -192,7 +192,7 @@ class PassScheduler:
         #set the status
         self.status = {
             "status": "waiting",
-            "pass": self.next_pass
+            "pass": self.next_pass.info
         }
         utils.log(f"Waiting until {datetime.fromtimestamp(self.next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {self.next_pass.max_elevation}° {self.next_pass.satellite_name} pass...")
 
@@ -215,7 +215,7 @@ class PassScheduler:
         #set the status
         self.status = {
             "status": "waiting",
-            "pass": self.next_pass
+            "pass": self.next_pass.info
         }
         utils.log(f"Waiting until {datetime.fromtimestamp(self.next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {self.next_pass.max_elevation}° {self.next_pass.satellite_name} pass...")
         

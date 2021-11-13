@@ -37,7 +37,7 @@ class Pass:
 
         scheduler.status = {
             "status": "processing",
-            "pass": self
+            "pass": self.info
         }
 
         # string used for naming the files  (aos in %Y-%m-%d %H.%M.%S format)
