@@ -21,7 +21,7 @@ local_path = Path(__file__).parent
 class PassScheduler:
 
     def __init__(self):
-        self.status = Manager().dict()
+        self.status = {}
 
         # get coordinates from secrets file
         lat = utils.get_secrets()["lat"]
