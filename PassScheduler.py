@@ -8,6 +8,7 @@ import traceback
 from flask import jsonify
 from glob import glob
 import os
+from multiprocessing import Manager
 
 # local imports
 import utils
@@ -20,7 +21,7 @@ local_path = Path(__file__).parent
 class PassScheduler:
 
     def __init__(self):
-        global status
+        self.status = Manager().dict()
 
         # get coordinates from secrets file
         lat = utils.get_secrets()["lat"]
@@ -32,10 +33,10 @@ class PassScheduler:
         # get the satellites to be scheduled
         self.satellites = utils.get_config()["satellites"]
 
-        self.status = {
+        self.set_status({
             "status": "Initialized",
             "pass": None
-        }
+        })
 
         # create the background thread for processing passes
         #self.thread = threading.Thread(target=self._run_process)
@@ -190,10 +191,10 @@ class PassScheduler:
         self.scheduler.add_job(self.process_pass, run_date=datetime.fromtimestamp(self.next_pass.aos), args=[self.next_pass])
 
         #set the status
-        self.status = {
+        self.set_status({
             "status": "waiting",
             "pass": self.next_pass.info
-        }
+        })
         utils.log(f"Waiting until {datetime.fromtimestamp(self.next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {self.next_pass.max_elevation}° {self.next_pass.satellite_name} pass...")
 
         #start the scheduler
@@ -213,15 +214,16 @@ class PassScheduler:
             traceback.print_exc()
         
         #set the status
-        self.status = {
+        self.set_status({
             "status": "waiting",
             "pass": self.next_pass.info
-        }
+        })
         utils.log(f"Waiting until {datetime.fromtimestamp(self.next_pass.aos).strftime('%B %-d, %Y at %-H:%M:%S')} for {self.next_pass.max_elevation}° {self.next_pass.satellite_name} pass...")
         
 
     def set_status(self, new_status):
-        self.status = new_status
+        for key in new_status.keys():
+            self.status[key] = new_status[key]
 
     def get_status(self):
         return self.status

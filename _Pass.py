@@ -35,10 +35,10 @@ class Pass:
 
         utils.log(f"Started processing {self.max_elevation}° {self.satellite_name} pass at {datetime.fromtimestamp(self.aos).strftime('%B %-d, %Y at %-H:%M:%S')}")
 
-        scheduler.status = {
+        scheduler.set_status({
             "status": "processing",
             "pass": self.info
-        }
+        })
 
         # string used for naming the files  (aos in %Y-%m-%d %H.%M.%S format)
         local_time = datetime.fromtimestamp(self.aos).strftime("%Y-%m-%d_%H.%M.%S")

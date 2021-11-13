@@ -17,10 +17,10 @@ def METEOR(_pass, output_filename_base, scheduler):
     global local_path
 
     #set the status
-    scheduler.status = {
+    scheduler.set_status({
         "status": "recording",
         "pass": _pass.info
-    }
+    })
 
     # record pass baseband with rtl_fm
     print("recording pass...")
@@ -30,10 +30,10 @@ def METEOR(_pass, output_filename_base, scheduler):
     #os.system(f"timeout {_pass.duration} /usr/local/bin/rtl_fm -M raw -s 110k -f {_pass.frequency} -E dc -g 49.6 -p 0 /tmp/meteor_iq; screen -X -S meteor quit")
 
     #set the status
-    scheduler.status = {
+    scheduler.set_status({
         "status": "demodulating",
         "pass": _pass.info
-    }
+    })
 
     # demodulate the signal
     print("demodulating meteor signal...")
@@ -44,10 +44,10 @@ def METEOR(_pass, output_filename_base, scheduler):
         return [], None
 
     #set the status
-    scheduler.status = {
+    scheduler.set_status({
         "status": "decoding",
         "pass": _pass.info
-    }
+    })
 
     output_directory = '/'.join(output_filename_base.split('/')[:-1])
     try:
@@ -146,20 +146,20 @@ def NOAA(_pass, output_filename_base, scheduler):
     global local_path
 
     #set the status
-    scheduler.status = {
+    scheduler.set_status({
         "status": "recording",
         "pass": _pass.info
-    }
+    })
 
     # record the pass with rtl_fm
     print(f"writing to file: {output_filename_base}.wav")
     os.system(f"timeout {_pass.duration} /usr/local/bin/rtl_fm -d 0 -f {_pass.frequency} -g 49.6 -s 37000 -E deemp -F 9 - | sox -traw -esigned -c1 -b16 -r37000 - {output_filename_base}.wav rate 11025")
 
     #set the status
-    scheduler.status = {
+    scheduler.set_status({
         "status": "decoding",
         "pass": _pass.info
-    }
+    })
 
     # check if the wav file was properly created
     if os.path.isfile(f"{output_filename_base}.wav") == True and os.stat(f"{output_filename_base}.wav").st_size > 50:
