@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 import json
 import predict
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 import traceback
 from flask import jsonify
 from glob import glob
@@ -46,7 +46,7 @@ class PassScheduler:
         self.tle_updated_time = time.time()
         self.tle_update_frequency = utils.get_config()["tle update frequency"]
 
-        self.scheduler = BlockingScheduler()
+        self.scheduler = BackgroundScheduler()
         self.next_pass = None
 
     def get_passes(self, pass_count=1, after=None, before=None, satellite_names=None, min_elevation=None, max_elevation=None, min_sun_elevation=None, max_sun_elevation=None):
